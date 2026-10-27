@@ -33,8 +33,8 @@
 
              #mynetwork {
                  width: 100%;
-                 height: 460px;
-                 background-color: #0F172A;
+                 height: 500px;
+                 background-color: #0B1120;
                  border: 1px solid lightgray;
                  position: relative;
                  float: left;
@@ -88,8 +88,8 @@
                   
 
                   // parsing and collecting nodes and edges from the python
-                  nodes = new vis.DataSet([{"color": "#38BDF8", "font": {"color": "white"}, "id": "user_j.doe@synthex-defense.internal", "label": "j.doe@synthex-defense.internal", "shape": "dot", "size": 24, "title": "User Account: j.doe@synthex-defense.internal"}, {"color": "#EF4444", "font": {"color": "white"}, "id": "ip_185.220.101.5", "label": "185.220.101.5", "shape": "dot", "size": 24, "title": "Attacker IP: 185.220.101.5"}, {"color": "#F59E0B", "font": {"color": "white"}, "id": "file_\\\\SYNTHEX-FS01\\Finance-Confidential\\Unreleased_2026_Q3_SEC_Financial_Audit.xlsx", "label": "\\\\SYNTHEX-FS01\\Finance-Confidential\\Unreleased_2026_Q3_SEC_Financial_Audit.xlsx", "shape": "dot", "size": 24, "title": "File: \\\\SYNTHEX-FS01\\Finance-Confidential\\Unreleased_2026_Q3_SEC_Financial_Audit.xlsx"}, {"color": "#F59E0B", "font": {"color": "white"}, "id": "file_\\\\SYNTHEX-FS01\\Classified-R\u0026D\\Project_Titan\\core_firmware_source_code_v4.2.tar.gz", "label": "\\\\SYNTHEX-FS01\\Classified-R\u0026D\\Project_Titan\\core_firmware_source_code_v4.2.tar.gz", "shape": "dot", "size": 24, "title": "File: \\\\SYNTHEX-FS01\\Classified-R\u0026D\\Project_Titan\\core_firmware_source_code_v4.2.tar.gz"}, {"color": "#F59E0B", "font": {"color": "white"}, "id": "file_\\\\SYNTHEX-FS01\\HR-Restricted\\Executive_Compensation_SSN_Vault.kdbx", "label": "\\\\SYNTHEX-FS01\\HR-Restricted\\Executive_Compensation_SSN_Vault.kdbx", "shape": "dot", "size": 24, "title": "File: \\\\SYNTHEX-FS01\\HR-Restricted\\Executive_Compensation_SSN_Vault.kdbx"}, {"color": "#10B981", "font": {"color": "white"}, "id": "src_10.240.12.45", "label": "10.240.12.45", "shape": "dot", "size": 24, "title": "Internal Host: 10.240.12.45"}, {"color": "#DC2626", "font": {"color": "white"}, "id": "dest_198.51.100.99", "label": "198.51.100.99", "shape": "dot", "size": 24, "title": "Exfil Destination: 198.51.100.99"}]);
-                  edges = new vis.DataSet([{"color": "#EF4444", "from": "ip_185.220.101.5", "label": "UNAUTHORIZED_LOGIN", "to": "user_j.doe@synthex-defense.internal", "width": 2}, {"color": "#F59E0B", "from": "user_j.doe@synthex-defense.internal", "label": "DOWNLOADED_FILE", "to": "file_\\\\SYNTHEX-FS01\\Finance-Confidential\\Unreleased_2026_Q3_SEC_Financial_Audit.xlsx", "width": 2}, {"color": "#F59E0B", "from": "user_j.doe@synthex-defense.internal", "label": "DOWNLOADED_FILE", "to": "file_\\\\SYNTHEX-FS01\\Classified-R\u0026D\\Project_Titan\\core_firmware_source_code_v4.2.tar.gz", "width": 2}, {"color": "#F59E0B", "from": "user_j.doe@synthex-defense.internal", "label": "DOWNLOADED_FILE", "to": "file_\\\\SYNTHEX-FS01\\HR-Restricted\\Executive_Compensation_SSN_Vault.kdbx", "width": 2}, {"color": "#DC2626", "from": "src_10.240.12.45", "label": "EXFILTRATION_FLOW", "to": "dest_198.51.100.99", "width": 2}]);
+                  nodes = new vis.DataSet([{"borderWidth": 2, "color": {"background": "#0284C7", "border": "#0369A1"}, "font": {"color": "#FFFFFF"}, "id": "user_j.doe@synthex-defense.internal", "label": "j.doe@synthex-defense.internal", "shape": "dot", "size": 26, "title": "User Account: j.doe@synthex-defense.internal"}, {"borderWidth": 2, "color": {"background": "#EF4444", "border": "#DC2626"}, "font": {"color": "#FFFFFF"}, "id": "ip_185.220.101.5", "label": "185.220.101.5", "shape": "dot", "size": 26, "title": "Attacker IP: 185.220.101.5"}, {"borderWidth": 2, "color": {"background": "#D97706", "border": "#B45309"}, "font": {"color": "#FFFFFF"}, "id": "file_\\\\SYNTHEX-FS01\\Finance-Confidential\\Unreleased_2026_Q3_SEC_Financial_Audit.xlsx", "label": "\\\\SYNTHEX-FS01\\Finance-Confidential\\Unreleased_2026_Q3_SEC_Financial_Audit.xlsx", "shape": "dot", "size": 26, "title": "File: \\\\SYNTHEX-FS01\\Finance-Confidential\\Unreleased_2026_Q3_SEC_Financial_Audit.xlsx"}, {"borderWidth": 2, "color": {"background": "#D97706", "border": "#B45309"}, "font": {"color": "#FFFFFF"}, "id": "file_\\\\SYNTHEX-FS01\\Classified-R\u0026D\\Project_Titan\\core_firmware_source_code_v4.2.tar.gz", "label": "\\\\SYNTHEX-FS01\\Classified-R\u0026D\\Project_Titan\\core_firmware_source_code_v4.2.tar.gz", "shape": "dot", "size": 26, "title": "File: \\\\SYNTHEX-FS01\\Classified-R\u0026D\\Project_Titan\\core_firmware_source_code_v4.2.tar.gz"}, {"borderWidth": 2, "color": {"background": "#D97706", "border": "#B45309"}, "font": {"color": "#FFFFFF"}, "id": "file_\\\\SYNTHEX-FS01\\HR-Restricted\\Executive_Compensation_SSN_Vault.kdbx", "label": "\\\\SYNTHEX-FS01\\HR-Restricted\\Executive_Compensation_SSN_Vault.kdbx", "shape": "dot", "size": 26, "title": "File: \\\\SYNTHEX-FS01\\HR-Restricted\\Executive_Compensation_SSN_Vault.kdbx"}, {"borderWidth": 2, "color": {"background": "#059669", "border": "#047857"}, "font": {"color": "#FFFFFF"}, "id": "src_10.240.12.45", "label": "10.240.12.45", "shape": "dot", "size": 26, "title": "Internal Host: 10.240.12.45"}, {"borderWidth": 2, "color": {"background": "#991B1B", "border": "#7F1D1D"}, "font": {"color": "#FFFFFF"}, "id": "dest_198.51.100.99", "label": "198.51.100.99", "shape": "dot", "size": 26, "title": "Exfil Destination: 198.51.100.99"}]);
+                  edges = new vis.DataSet([{"arrows": {"to": {"enabled": true, "scaleFactor": 0.8}}, "color": "#EF4444", "font": {"align": "horizontal", "background": "#0F172A", "color": "#CBD5E1", "face": "Inter, sans-serif", "size": 11, "strokeWidth": 0}, "from": "ip_185.220.101.5", "label": "UNAUTHORIZED_LOGIN", "to": "user_j.doe@synthex-defense.internal", "width": 2}, {"arrows": {"to": {"enabled": true, "scaleFactor": 0.8}}, "color": "#F59E0B", "font": {"align": "horizontal", "background": "#0F172A", "color": "#CBD5E1", "face": "Inter, sans-serif", "size": 11, "strokeWidth": 0}, "from": "user_j.doe@synthex-defense.internal", "label": "DOWNLOADED_FILE", "to": "file_\\\\SYNTHEX-FS01\\Finance-Confidential\\Unreleased_2026_Q3_SEC_Financial_Audit.xlsx", "width": 2}, {"arrows": {"to": {"enabled": true, "scaleFactor": 0.8}}, "color": "#F59E0B", "font": {"align": "horizontal", "background": "#0F172A", "color": "#CBD5E1", "face": "Inter, sans-serif", "size": 11, "strokeWidth": 0}, "from": "user_j.doe@synthex-defense.internal", "label": "DOWNLOADED_FILE", "to": "file_\\\\SYNTHEX-FS01\\Classified-R\u0026D\\Project_Titan\\core_firmware_source_code_v4.2.tar.gz", "width": 2}, {"arrows": {"to": {"enabled": true, "scaleFactor": 0.8}}, "color": "#F59E0B", "font": {"align": "horizontal", "background": "#0F172A", "color": "#CBD5E1", "face": "Inter, sans-serif", "size": 11, "strokeWidth": 0}, "from": "user_j.doe@synthex-defense.internal", "label": "DOWNLOADED_FILE", "to": "file_\\\\SYNTHEX-FS01\\HR-Restricted\\Executive_Compensation_SSN_Vault.kdbx", "width": 2}, {"arrows": {"to": {"enabled": true, "scaleFactor": 0.8}}, "color": "#DC2626", "font": {"align": "horizontal", "background": "#0F172A", "color": "#CBD5E1", "face": "Inter, sans-serif", "size": 11, "strokeWidth": 0}, "from": "src_10.240.12.45", "label": "EXFILTRATION_FLOW", "to": "dest_198.51.100.99", "width": 2}]);
 
                   nodeColors = {};
                   allNodes = nodes.get({ returnType: "Object" });
@@ -100,43 +100,7 @@
                   // adding nodes and edges to the graph
                   data = {nodes: nodes, edges: edges};
 
-                  var options = {
-    "configure": {
-        "enabled": false
-    },
-    "edges": {
-        "color": {
-            "inherit": true
-        },
-        "smooth": {
-            "enabled": true,
-            "type": "dynamic"
-        }
-    },
-    "interaction": {
-        "dragNodes": true,
-        "hideEdgesOnDrag": false,
-        "hideNodesOnDrag": false
-    },
-    "physics": {
-        "barnesHut": {
-            "avoidOverlap": 0,
-            "centralGravity": 0.25,
-            "damping": 0.09,
-            "gravitationalConstant": -3200,
-            "springConstant": 0.001,
-            "springLength": 130
-        },
-        "enabled": true,
-        "stabilization": {
-            "enabled": true,
-            "fit": true,
-            "iterations": 1000,
-            "onlyDynamicEdges": false,
-            "updateInterval": 50
-        }
-    }
-};
+                  var options = {"nodes": {"shadow": {"enabled": true, "color": "rgba(0,0,0,0.5)", "size": 6}}, "edges": {"smooth": {"type": "curvedCW", "roundness": 0.2}}, "physics": {"barnesHut": {"gravitationalConstant": -8000, "centralGravity": 0.15, "springLength": 240, "springConstant": 0.04, "damping": 0.09, "avoidOverlap": 0.7}, "minVelocity": 0.75}, "interaction": {"hover": true, "zoomView": true, "dragView": true}};
 
                   
 

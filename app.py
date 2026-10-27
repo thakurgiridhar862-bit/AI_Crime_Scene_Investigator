@@ -479,26 +479,35 @@ elif "Report Generation" in nav_choice:
                 import streamlit.components.v1 as components
 
                 net = Network(
-                    height="460px", width="100%", bgcolor="#0F172A", font_color="white"
+                    height="500px", width="100%", bgcolor="#0B1120", font_color="#FFFFFF"
                 )
-                net.barnes_hut(gravity=-3200, central_gravity=0.25, spring_length=130)
 
                 group_colors = {
-                    "MALICIOUS_IP": "#EF4444",
-                    "USER": "#38BDF8",
-                    "SENSITIVE_FILE": "#F59E0B",
-                    "INTERNAL_HOST": "#10B981",
-                    "EXFIL_DESTINATION": "#DC2626",
+                    "MALICIOUS_IP": {"background": "#EF4444", "border": "#DC2626"},
+                    "USER": {"background": "#0284C7", "border": "#0369A1"},
+                    "SENSITIVE_FILE": {"background": "#D97706", "border": "#B45309"},
+                    "INTERNAL_HOST": {"background": "#059669", "border": "#047857"},
+                    "EXFIL_DESTINATION": {"background": "#991B1B", "border": "#7F1D1D"},
                 }
 
                 for n in graph_data.get("nodes", []):
-                    color = group_colors.get(n.get("group"), "#94A3B8")
+                    col_spec = group_colors.get(n.get("group"), {"background": "#475569", "border": "#334155"})
                     net.add_node(
                         n["id"],
                         label=n["label"],
                         title=n.get("title", ""),
-                        color=color,
-                        size=24,
+                        color=col_spec,
+                        size=26,
+                        shape="dot",
+                        borderWidth=2,
+                        font={
+                            "color": "#F8FAFC",
+                            "size": 12,
+                            "face": "Inter, sans-serif",
+                            "background": "#0F172A",
+                            "strokeWidth": 2,
+                            "strokeColor": "#1E293B"
+                        }
                     )
 
                 for e in graph_data.get("edges", []):
@@ -508,7 +517,47 @@ elif "Report Generation" in nav_choice:
                         label=e.get("label", ""),
                         color=e.get("color", "#94A3B8"),
                         width=2,
+                        arrows={"to": {"enabled": True, "scaleFactor": 0.8}},
+                        font={
+                            "color": "#CBD5E1",
+                            "size": 11,
+                            "face": "Inter, sans-serif",
+                            "background": "#0F172A",
+                            "strokeWidth": 0,
+                            "align": "horizontal"
+                        }
                     )
+
+                # Set physics and options to guarantee clean layout and zero overlaps
+                net.set_options("""
+                var options = {
+                  "nodes": {
+                    "shadow": { "enabled": true, "color": "rgba(0,0,0,0.5)", "size": 6 }
+                  },
+                  "edges": {
+                    "smooth": {
+                      "type": "curvedCW",
+                      "roundness": 0.2
+                    }
+                  },
+                  "physics": {
+                    "barnesHut": {
+                      "gravitationalConstant": -8000,
+                      "centralGravity": 0.15,
+                      "springLength": 240,
+                      "springConstant": 0.04,
+                      "damping": 0.09,
+                      "avoidOverlap": 0.7
+                    },
+                    "minVelocity": 0.75
+                  },
+                  "interaction": {
+                    "hover": true,
+                    "zoomView": true,
+                    "dragView": true
+                  }
+                }
+                """)
 
                 tmp_html = os.path.join(BASE_DIR, "reports", "correlation_graph.html")
                 os.makedirs(os.path.dirname(tmp_html), exist_ok=True)
@@ -516,7 +565,34 @@ elif "Report Generation" in nav_choice:
 
                 with open(tmp_html, "r", encoding="utf-8") as f:
                     html_content = f.read()
-                components.html(html_content, height=490)
+
+                # Clean dark theme injection - eliminate ugly white borders and card margins
+                custom_theme_css = """
+                <style>
+                    html, body {
+                        background-color: #0B1120 !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        overflow: hidden !important;
+                    }
+                    .card {
+                        background-color: #0B1120 !important;
+                        border: none !important;
+                        box-shadow: none !important;
+                    }
+                    #mynetwork {
+                        background-color: #0B1120 !important;
+                        border: 1px solid #1E293B !important;
+                        border-radius: 10px !important;
+                        box-shadow: inset 0 2px 10px rgba(0,0,0,0.4) !important;
+                    }
+                    center, h1 {
+                        display: none !important;
+                    }
+                </style>
+                """
+                html_content = html_content.replace("<head>", f"<head>{custom_theme_css}")
+                components.html(html_content, height=520)
             except Exception as e:
                 st.warning(f"Interactive PyVis graph rendering fallback: {str(e)}")
 

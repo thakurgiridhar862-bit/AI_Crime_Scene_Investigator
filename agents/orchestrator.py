@@ -1,11 +1,12 @@
+import importlib
 from typing import TypedDict, List, Dict, Any, Optional
 from langgraph.graph import StateGraph, START, END
 
-from .evidence_agent import evidence_node
-from .anomaly_agent import anomaly_node
-from .correlation_agent import correlation_node
-from .timeline_agent import timeline_node
-from .report_agent import report_node
+from . import evidence_agent
+from . import anomaly_agent
+from . import correlation_agent
+from . import timeline_agent
+from . import report_agent
 
 class InvestigationState(TypedDict, total=False):
     case_id: str
@@ -22,14 +23,20 @@ class InvestigationState(TypedDict, total=False):
 
 def build_investigation_graph():
     """Constructs the LangGraph Multi-Agent Forensic Investigation Workflow."""
+    importlib.reload(evidence_agent)
+    importlib.reload(anomaly_agent)
+    importlib.reload(correlation_agent)
+    importlib.reload(timeline_agent)
+    importlib.reload(report_agent)
+
     workflow = StateGraph(InvestigationState)
 
     # Register Nodes
-    workflow.add_node("evidence_agent", evidence_node)
-    workflow.add_node("anomaly_agent", anomaly_node)
-    workflow.add_node("correlation_agent", correlation_node)
-    workflow.add_node("timeline_agent", timeline_node)
-    workflow.add_node("report_agent", report_node)
+    workflow.add_node("evidence_agent", evidence_agent.evidence_node)
+    workflow.add_node("anomaly_agent", anomaly_agent.anomaly_node)
+    workflow.add_node("correlation_agent", correlation_agent.correlation_node)
+    workflow.add_node("timeline_agent", timeline_agent.timeline_node)
+    workflow.add_node("report_agent", report_agent.report_node)
 
     # Define Workflow Edges
     workflow.add_edge(START, "evidence_agent")
@@ -41,14 +48,12 @@ def build_investigation_graph():
 
     return workflow.compile()
 
-# Global compiled application instance
-investigation_app = build_investigation_graph()
-
 def run_investigation(case_id: str, input_files: Dict[str, Any], case_title: str = "") -> Dict[str, Any]:
     """
     Main entrypoint called by the Streamlit application.
     Executes the multi-agent investigation swarm and returns the complete state.
     """
+    investigation_app = build_investigation_graph()
     initial_state: InvestigationState = {
         "case_id": case_id,
         "case_title": case_title or case_id,
