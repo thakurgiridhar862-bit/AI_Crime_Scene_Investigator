@@ -500,7 +500,9 @@ elif "Report Generation" in nav_choice:
                 graph_data = state.get("graph_elements", {"nodes": [], "edges": []})
                 correlations = state.get("correlations", [])
                 st.dataframe(
-                    pd.DataFrame(correlations), use_container_width=True, hide_index=True
+                    pd.DataFrame(correlations),
+                    use_container_width=True,
+                    hide_index=True,
                 )
 
                 try:
@@ -508,19 +510,31 @@ elif "Report Generation" in nav_choice:
                     import streamlit.components.v1 as components
 
                     net = Network(
-                        height="500px", width="100%", bgcolor="#0B1120", font_color="#FFFFFF"
+                        height="500px",
+                        width="100%",
+                        bgcolor="#0B1120",
+                        font_color="#FFFFFF",
                     )
 
                     group_colors = {
                         "MALICIOUS_IP": {"background": "#EF4444", "border": "#DC2626"},
                         "USER": {"background": "#0284C7", "border": "#0369A1"},
-                        "SENSITIVE_FILE": {"background": "#D97706", "border": "#B45309"},
+                        "SENSITIVE_FILE": {
+                            "background": "#D97706",
+                            "border": "#B45309",
+                        },
                         "INTERNAL_HOST": {"background": "#059669", "border": "#047857"},
-                        "EXFIL_DESTINATION": {"background": "#991B1B", "border": "#7F1D1D"},
+                        "EXFIL_DESTINATION": {
+                            "background": "#991B1B",
+                            "border": "#7F1D1D",
+                        },
                     }
 
                     for n in graph_data.get("nodes", []):
-                        col_spec = group_colors.get(n.get("group"), {"background": "#475569", "border": "#334155"})
+                        col_spec = group_colors.get(
+                            n.get("group"),
+                            {"background": "#475569", "border": "#334155"},
+                        )
                         net.add_node(
                             n["id"],
                             label=n["label"],
@@ -535,8 +549,8 @@ elif "Report Generation" in nav_choice:
                                 "face": "Inter, sans-serif",
                                 "background": "#0F172A",
                                 "strokeWidth": 2,
-                                "strokeColor": "#1E293B"
-                            }
+                                "strokeColor": "#1E293B",
+                            },
                         )
 
                     for e in graph_data.get("edges", []):
@@ -553,8 +567,8 @@ elif "Report Generation" in nav_choice:
                                 "face": "Inter, sans-serif",
                                 "background": "#0F172A",
                                 "strokeWidth": 0,
-                                "align": "horizontal"
-                            }
+                                "align": "horizontal",
+                            },
                         )
 
                     # Set physics and options to guarantee clean layout and zero overlaps
@@ -588,7 +602,9 @@ elif "Report Generation" in nav_choice:
                     }
                     """)
 
-                    tmp_html = os.path.join(BASE_DIR, "reports", "correlation_graph.html")
+                    tmp_html = os.path.join(
+                        BASE_DIR, "reports", "correlation_graph.html"
+                    )
                     os.makedirs(os.path.dirname(tmp_html), exist_ok=True)
                     net.save_graph(tmp_html)
 
@@ -620,7 +636,9 @@ elif "Report Generation" in nav_choice:
                         }
                     </style>
                     """
-                    html_content = html_content.replace("<head>", f"<head>{custom_theme_css}")
+                    html_content = html_content.replace(
+                        "<head>", f"<head>{custom_theme_css}"
+                    )
                     components.html(html_content, height=520)
                 except Exception as e:
                     st.warning(f"Interactive PyVis graph rendering fallback: {str(e)}")
@@ -641,7 +659,9 @@ elif "Report Generation" in nav_choice:
                         placeholder="Filter by user, IP, action...",
                     )
 
-                filtered = [t for t in timeline if not show_anom_only or t["is_anomaly"]]
+                filtered = [
+                    t for t in timeline if not show_anom_only or t["is_anomaly"]
+                ]
                 if search_query:
                     sq = search_query.lower()
                     filtered = [
@@ -667,7 +687,9 @@ elif "Report Generation" in nav_choice:
                         }
                     )
                 st.dataframe(
-                    pd.DataFrame(timeline_rows), use_container_width=True, hide_index=True
+                    pd.DataFrame(timeline_rows),
+                    use_container_width=True,
+                    hide_index=True,
                 )
 
             # Agent 6: Report Agent
@@ -677,7 +699,8 @@ elif "Report Generation" in nav_choice:
                 r_c1, r_c2, r_c3 = st.columns(3)
                 r_c1.metric("Classification", report.get("classification", "Unknown"))
                 r_c2.metric(
-                    "Anti-Hallucination Confidence", f"{report.get('confidence_score', 0)}%"
+                    "Anti-Hallucination Confidence",
+                    f"{report.get('confidence_score', 0)}%",
                 )
                 r_c3.metric(
                     "Verified Claims Grounded",
