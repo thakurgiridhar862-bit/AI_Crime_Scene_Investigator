@@ -17,14 +17,14 @@ def generate_containment_plan(state: Dict[str, Any]) -> Dict[str, Any]:
 
     for a in anomalies:
         ent = a.get("entities_involved", {})
-        if "ip" in ent:
-            blocked_ips.add(ent["ip"])
-        if "dest_ip" in ent:
-            blocked_ips.add(ent["dest_ip"])
-        if "user" in ent:
-            compromised_users.add(ent["user"])
-        if "file" in ent:
-            quarantine_files.add(ent["file"])
+        if ent.get("ip"):
+            blocked_ips.add(str(ent["ip"]))
+        if ent.get("dest_ip"):
+            blocked_ips.add(str(ent["dest_ip"]))
+        if ent.get("user"):
+            compromised_users.add(str(ent["user"]))
+        if ent.get("file"):
+            quarantine_files.add(str(ent["file"]))
 
     timestamp_str = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
 

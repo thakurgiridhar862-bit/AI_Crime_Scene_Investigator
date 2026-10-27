@@ -61,7 +61,10 @@ class ForensicParser:
         elif "event_type" not in df.columns:
             df["event_type"] = "LOGIN_SUCCESS"
 
-        df["timestamp"] = pd.to_datetime(df[time_col].astype(str).str.replace(" UTC", ""), errors="coerce")
+        if time_col in df.columns:
+            df["timestamp"] = pd.to_datetime(df[time_col].astype(str).str.replace(" UTC", ""), errors="coerce")
+        else:
+            df["timestamp"] = pd.Timestamp.utcnow()
         df["timestamp"] = df["timestamp"].fillna(pd.Timestamp.utcnow())
 
         return df.sort_values("timestamp").reset_index(drop=True)
@@ -97,7 +100,10 @@ class ForensicParser:
             df["bytes_read"] = 0
 
         df["bytes_read"] = pd.to_numeric(df["bytes_read"], errors="coerce").fillna(0).astype(int)
-        df["timestamp"] = pd.to_datetime(df[time_col].astype(str).str.replace(" UTC", ""), errors="coerce")
+        if time_col in df.columns:
+            df["timestamp"] = pd.to_datetime(df[time_col].astype(str).str.replace(" UTC", ""), errors="coerce")
+        else:
+            df["timestamp"] = pd.Timestamp.utcnow()
         df["timestamp"] = df["timestamp"].fillna(pd.Timestamp.utcnow())
 
         return df.sort_values("timestamp").reset_index(drop=True)
@@ -133,7 +139,10 @@ class ForensicParser:
             df["dest_port"] = 443
 
         df["bytes_sent"] = pd.to_numeric(df["bytes_sent"], errors="coerce").fillna(0).astype(int)
-        df["timestamp"] = pd.to_datetime(df[time_col].astype(str).str.replace(" UTC", ""), errors="coerce")
+        if time_col in df.columns:
+            df["timestamp"] = pd.to_datetime(df[time_col].astype(str).str.replace(" UTC", ""), errors="coerce")
+        else:
+            df["timestamp"] = pd.Timestamp.utcnow()
         df["timestamp"] = df["timestamp"].fillna(pd.Timestamp.utcnow())
 
         return df.sort_values("timestamp").reset_index(drop=True)

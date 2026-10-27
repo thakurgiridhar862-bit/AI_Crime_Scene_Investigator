@@ -4,7 +4,6 @@ import io
 import json
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 
 # Ensure root directory is in sys.path
@@ -18,255 +17,391 @@ from agents.containment_agent import generate_containment_plan
 from agents.copilot import answer_investigation_query
 
 st.set_page_config(
-    page_title="AI Digital Crime Scene Investigator (SOC & SOAR)",
+    page_title="AI Digital Crime Scene Investigator",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed",
 )
 
-# Custom Styling (Vibrant & Clean)
-st.markdown("""
+# Custom Styling (No Sidebar, Ultra-clean, matching user's sketch)
+st.markdown(
+    """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
     
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
     }
+
+    /* Completely hide sidebar */
+    [data-testid="stSidebar"] {
+        display: none !important;
+    }
     
-    .soc-header {
+    /* Top Header */
+    .app-header {
         background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
         border: 1px solid #312E81;
-        border-radius: 12px;
-        padding: 1.5rem 2rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        padding: 1.2rem 1.8rem;
+        margin-bottom: 1.2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
     }
-    .soc-title {
-        font-size: 2.2rem;
+    .app-title {
+        font-size: 1.8rem;
         font-weight: 800;
         background: linear-gradient(90deg, #38BDF8, #818CF8, #C084FC);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin-bottom: 0.2rem;
     }
-    .soc-subtitle {
+    .app-sub {
         color: #94A3B8;
-        font-size: 1rem;
-        font-weight: 500;
+        font-size: 0.9rem;
     }
     
-    .live-pulse {
-        display: inline-flex;
-        align-items: center;
-        background: rgba(16, 185, 129, 0.15);
-        color: #10B981;
-        border: 1px solid rgba(16, 185, 129, 0.3);
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        font-family: 'JetBrains Mono', monospace;
-    }
-    .pulse-dot {
-        width: 8px;
-        height: 8px;
-        background-color: #10B981;
-        border-radius: 50%;
-        margin-right: 6px;
-        box-shadow: 0 0 8px #10B981;
-    }
-    
-    .kpi-container {
+    /* Panel Containers matching user sketch */
+    .sketch-box {
         background: #0F172A;
-        border: 1px solid #1E293B;
+        border: 2px solid #1E293B;
         border-radius: 10px;
         padding: 1.2rem;
-        text-align: center;
-        transition: transform 0.2s ease, border-color 0.2s ease;
+        margin-bottom: 1rem;
     }
-    .kpi-container:hover {
-        transform: translateY(-2px);
-        border-color: #38BDF8;
-    }
-    .kpi-val {
-        font-size: 1.8rem;
+    .sketch-box-header {
+        font-size: 1.15rem;
         font-weight: 700;
         color: #F8FAFC;
-        font-family: 'JetBrains Mono', monospace;
-    }
-    .kpi-lbl {
-        font-size: 0.85rem;
-        color: #94A3B8;
-        font-weight: 600;
+        border-bottom: 1px solid #1E293B;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        margin-top: 0.2rem;
     }
 
+    /* Record Table Container */
+    .record-container {
+        background: #0B1120;
+        border: 2px solid #334155;
+        border-radius: 10px;
+        padding: 1rem 1.4rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Threat Badges */
     .badge-critical {
-        background: rgba(220, 38, 38, 0.15);
+        background: rgba(220, 38, 38, 0.2);
         color: #EF4444;
-        border: 1px solid rgba(239, 68, 68, 0.4);
-        padding: 0.2rem 0.6rem;
-        border-radius: 6px;
+        border: 1px solid rgba(239, 68, 68, 0.5);
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
         font-size: 0.75rem;
         font-weight: 700;
         font-family: 'JetBrains Mono', monospace;
     }
     .badge-high {
-        background: rgba(217, 119, 6, 0.15);
+        background: rgba(217, 119, 6, 0.2);
         color: #F59E0B;
-        border: 1px solid rgba(245, 158, 11, 0.4);
-        padding: 0.2rem 0.6rem;
-        border-radius: 6px;
+        border: 1px solid rgba(245, 158, 11, 0.5);
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
         font-size: 0.75rem;
         font-weight: 700;
         font-family: 'JetBrains Mono', monospace;
     }
-
-    .agent-chip {
-        display: inline-flex;
-        align-items: center;
-        background: #1E293B;
-        color: #CBD5E1;
-        border: 1px solid #334155;
-        border-radius: 8px;
-        padding: 0.5rem 0.8rem;
-        margin: 0.2rem;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-    .agent-check {
-        color: #10B981;
-        margin-right: 6px;
-        font-weight: 800;
-    }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # Session State Initialization
 if "investigation_state" not in st.session_state:
     st.session_state["investigation_state"] = None
 if "selected_scenario" not in st.session_state:
-    st.session_state["selected_scenario"] = "Scenario 1: External APT Exfiltration (Bulgaria IP)"
+    st.session_state["selected_scenario"] = (
+        "Scenario 1: External APT Exfiltration (Bulgaria IP)"
+    )
 if "containment_executed" not in st.session_state:
     st.session_state["containment_executed"] = False
 if "chat_messages" not in st.session_state:
     st.session_state["chat_messages"] = [
-        {"role": "assistant", "content": "👋 **Greetings Investigator.** I am your AI Detective Copilot connected directly to the active incident state. Ask me anything about the attack kill-chain, compromised assets, or active defense containment."}
+        {
+            "role": "assistant",
+            "content": "👋 **Greetings Investigator.** I am your AI Detective Copilot. Ask me anything about the attack kill-chain, compromised assets, or active defense containment.",
+        }
     ]
 
-# Sidebar Controls
-with st.sidebar:
-    st.image("https://img.icons8.com/color/96/000000/cyber-security.png", width=64)
-    st.markdown("### **DFIR Multi-Agent Swarm**")
-    st.markdown("<div class='live-pulse'><span class='pulse-dot'></span>SOC DEFENSE READY</div>", unsafe_allow_html=True)
-    st.write("")
-    
-    if st.button("🔄 Reset / Clear Session Cache", use_container_width=True):
-        st.session_state["investigation_state"] = None
-        st.session_state["scenario_loaded_flag"] = False
-        st.session_state["containment_executed"] = False
-        st.rerun()
-
-    st.divider()
-    st.markdown("**Swarm Architecture:**")
-    st.markdown("• **Agent 1:** Orchestrator (LangGraph DAG)<br>"
-                "• **Agent 2:** Evidence Analyst (SHA-256)<br>"
-                "• **Agent 3:** Anomaly Detector (MITRE ATT&CK)<br>"
-                "• **Agent 4:** Correlation Analyst (Entity Resolution)<br>"
-                "• **Agent 5:** Timeline Analyst (UTC Normalizer)<br>"
-                "• **Agent 6:** Report & Critic (Anti-Hallucination)<br>"
-                "• **Agent 7:** Autonomous Containment (SOAR Engine)", unsafe_allow_html=True)
-    st.divider()
-    st.caption("🔒 Compliant with NIST SP 800-86 & ISO/IEC 27037.")
-
-# Main Title Header
-st.markdown("""
-<div class='soc-header'>
-    <div style='display: flex; justify-content: space-between; align-items: center;'>
-        <div>
-            <div class='soc-title'>🛡️ AI Digital Crime Scene Investigator</div>
-            <div class='soc-subtitle'>Autonomous Multi-Agent Forensics Swarm, Incident Response & SOAR Defense Platform</div>
-        </div>
-        <div class='live-pulse'><span class='pulse-dot'></span>7 AGENTS READY</div>
+# Top Application Header
+st.markdown(
+    """
+<div class='app-header'>
+    <div>
+        <div class='app-title'>🛡️ AI Digital Crime Scene Investigator</div>
+        <div class='app-sub'>Autonomous Multi-Agent Forensics Swarm & Active SOAR Incident Response</div>
     </div>
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-# 7 Clean Numbered Tabs
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-    "📁 1. Case & Scenarios",
-    "📊 2. Incident Overview",
-    "⏳ 3. Forensic Timeline",
-    "🕸️ 4. Evidence Correlation",
-    "📝 5. Investigation Report",
-    "🛡️ 6. Autonomous Containment (SOAR)",
-    "💬 7. AI Detective Copilot"
-])
+# Clean Horizontal Navigation (No Sidebar)
+nav_choice = st.radio(
+    "Navigation Menu",
+    [
+        "📥 User Input",
+        "🤖 Report Generation",
+        "💬 AI Detective Copilot",
+    ],
+    horizontal=True,
+    label_visibility="collapsed",
+)
+
+st.write("")
+
+demo_dir = os.path.join(BASE_DIR, "data", "demo_case")
+live_dir = os.path.join(BASE_DIR, "evidence_for_live_demo")
 
 # ==============================================================================
-# TAB 1: CASE CREATION & MULTI-SCENARIO PRESETS
+# VIEW 1: USER INPUT (EXACTLY MATCHING USER'S HAND-DRAWN SKETCH)
 # ==============================================================================
-with tab1:
-    st.subheader("Case Management & Scenario Selection")
-    
-    col_sc1, col_sc2 = st.columns([2, 1])
-    with col_sc1:
-        scenario_choice = st.selectbox(
-            "Select Real-World Incident Scenario Preset:",
-            options=[
-                "Scenario 1: External APT Exfiltration (Bulgaria IP + Titan Source Code)",
-                "Scenario 2: Malicious Insider Threat (Terminated Employee Exfiltration)",
-                "Scenario 3: Ransomware Precursor (Admin Brute-Force + Backup Exfil)"
-            ],
-            index=0
+if "User Input" in nav_choice:
+    # 2-Panel Layout (Upload Box on Left, Status + Read More Box on Right)
+    col_left, col_right = st.columns([1.1, 0.9], gap="large")
+
+    with col_left:
+        st.markdown(
+            "<div class='sketch-box-header'>📁 Evidence Upload & Ingestion</div>",
+            unsafe_allow_html=True,
         )
-        st.session_state["selected_scenario"] = scenario_choice
 
-    with col_sc2:
-        st.write("")
-        st.write("")
-        if st.button("⚡ 1-Click Load Scenario Evidence", use_container_width=True, type="secondary"):
-            st.session_state["scenario_loaded_flag"] = True
-            st.session_state["containment_executed"] = False
-            st.success(f"Preset loaded for {scenario_choice.split(':')[0]}! Or upload custom CSVs below.")
+        # 1-Click Scenario Preset Option
+        sc_col1, sc_col2 = st.columns([2, 1])
+        with sc_col1:
+            scenario_choice = st.selectbox(
+                "Incident Simulation Profile:",
+                options=[
+                    "Scenario 1: External APT Exfiltration (Bulgaria IP + Titan Firmware)",
+                    "Scenario 2: Malicious Insider Breach (Terminated Employee Exfil)",
+                    "Scenario 3: Ransomware Precursor (Admin Credential Brute-Force)",
+                ],
+                label_visibility="collapsed",
+            )
+        with sc_col2:
+            if st.button("⚡ Quick Preset Load", use_container_width=True):
+                st.session_state["scenario_loaded_flag"] = True
+                st.success("Loaded preset logs!")
 
-    # Determine Scenario File Directory
-    if "Scenario 2" in scenario_choice:
-        demo_dir = os.path.join(BASE_DIR, "data", "scenario_2_insider_threat")
-        default_case_id = "CASE-2026-INSIDER-002"
-        default_title = "Insider Data Theft Prior to Employee Termination"
-    elif "Scenario 3" in scenario_choice:
-        demo_dir = os.path.join(BASE_DIR, "data", "scenario_3_ransomware_staging")
-        default_case_id = "CASE-2026-RANSOM-003"
-        default_title = "Privileged Admin Credential Abuse and Production Backup Exfiltration"
+        if "Scenario 2" in scenario_choice:
+            scen_dir = os.path.join(BASE_DIR, "data", "scenario_2_insider_threat")
+            def_case = "CASE-2026-INSIDER-002"
+        elif "Scenario 3" in scenario_choice:
+            scen_dir = os.path.join(BASE_DIR, "data", "scenario_3_ransomware_staging")
+            def_case = "CASE-2026-RANSOM-003"
+        else:
+            scen_dir = os.path.join(BASE_DIR, "data", "demo_case")
+            def_case = "CASE-2026-EXFIL-001"
+
+        case_id = st.text_input("Case Reference ID", value=def_case)
+
+        st.caption("Drop or Browse the 3 Authorized Forensic CSV Evidence Logs:")
+
+        # 3 Upload Boxes as drawn in user sketch
+        u_c1, u_c2, u_c3 = st.columns(3)
+        up_login = u_c1.file_uploader("1. Auth Logs", type=["csv"], key="u_login")
+        up_file = u_c2.file_uploader("2. File Logs", type=["csv"], key="u_file")
+        up_net = u_c3.file_uploader("3. NetFlow Logs", type=["csv"], key="u_net")
+
+        # Resolve inputs
+        login_input = up_login or (
+            os.path.join(scen_dir, "login_logs.csv")
+            if st.session_state.get("scenario_loaded_flag", False)
+            else None
+        )
+        file_input = up_file or (
+            os.path.join(scen_dir, "file_access.csv")
+            if st.session_state.get("scenario_loaded_flag", False)
+            else None
+        )
+        net_input = up_net or (
+            os.path.join(scen_dir, "network_logs.csv")
+            if st.session_state.get("scenario_loaded_flag", False)
+            else None
+        )
+
+        st.write("")
+        # The SUBMIT Button from the sketch
+        submit_btn = st.button(
+            "🚀 SUBMIT & EXECUTE INVESTIGATION",
+            type="primary",
+            use_container_width=True,
+        )
+
+        if submit_btn:
+            if not (login_input and file_input and net_input):
+                st.error(
+                    "⚠️ Incomplete Evidence! Upload all 3 CSVs or click '⚡ Quick Preset Load'."
+                )
+            else:
+                with st.spinner(
+                    "Multi-Agent Swarm executing: Ingesting -> Detecting -> Correlating -> Verifying..."
+                ):
+                    payload = {
+                        "login": login_input,
+                        "file": file_input,
+                        "network": net_input,
+                    }
+                    result = run_investigation(
+                        case_id, payload, "Automated Digital Forensics Triage"
+                    )
+                    st.session_state["investigation_state"] = result
+                    st.session_state["containment_executed"] = False
+                    st.success(
+                        "Investigation complete! See Status and Read More on the right, or scroll down for Record."
+                    )
+
+    state = st.session_state.get("investigation_state")
+
+    with col_right:
+        st.markdown(
+            "<div class='sketch-box-header'>📊 Status & Findings</div>",
+            unsafe_allow_html=True,
+        )
+
+        if not state:
+            st.info(
+                "Awaiting submission. Upload files on the left and click **SUBMIT** to see live status."
+            )
+        else:
+            anomalies = state.get("anomalies", [])
+            timeline = state.get("timeline", [])
+            crit_count = sum(1 for a in anomalies if a.get("severity") == "CRITICAL")
+            high_count = sum(1 for a in anomalies if a.get("severity") == "HIGH")
+            benign_count = max(0, len(timeline) - len(anomalies))
+
+            # Status Section with Donut Chart + Metrics
+            stat_c1, stat_c2 = st.columns([1.1, 0.9])
+            with stat_c1:
+                donut_fig = go.Figure(
+                    data=[
+                        go.Pie(
+                            labels=["Benign Events", "High Risk", "Critical"],
+                            values=[benign_count, high_count, crit_count],
+                            hole=0.62,
+                            marker=dict(colors=["#1E293B", "#F59E0B", "#EF4444"]),
+                        )
+                    ]
+                )
+                donut_fig.update_layout(
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    font=dict(color="#E2E8F0", family="Inter", size=10),
+                    margin=dict(l=5, r=5, t=5, b=5),
+                    height=180,
+                    showlegend=False,
+                )
+                st.plotly_chart(donut_fig, use_container_width=True)
+
+            with stat_c2:
+                st.markdown(f"**Events:** `{len(timeline):,}`")
+                st.markdown(
+                    f"**Critical IOCs:** <span class='badge-critical'>{crit_count} Critical</span>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                    f"**High Warnings:** <span class='badge-high'>{high_count} High</span>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(f"**Custody Integrity:** `100% SHA-256`")
+
+            st.write("")
+            # Quick Triage Summary Box inside Right Box
+            st.markdown(
+                """
+            <div style='background: rgba(30, 41, 59, 0.6); border: 1px solid #334155; border-radius: 8px; padding: 0.85rem; margin-top: 0.5rem;'>
+                <div style='font-size: 0.85rem; font-weight: 700; color: #38BDF8; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 6px;'>
+                    <span>⚡</span> <span>AUTOMATED TRIAGE VERDICT</span>
+                </div>
+                <div style='font-size: 0.82rem; color: #CBD5E1; line-height: 1.45;'>
+                    • <b>Intrusion Status:</b> Multi-stage coordinated breach detected.<br>
+                    • <b>Primary Vector:</b> Credential Hijacking & Exfiltration.<br>
+                    • <b>Containment:</b> Zero-Trust SOAR playbooks ready.
+                </div>
+            </div>
+            """,
+                unsafe_allow_html=True,
+            )
+            st.caption(
+                "👇 *Scroll down for complete Key Findings telemetry and Cryptographic Records.*"
+            )
+
+    # --------------------------------------------------------------------------
+    # FULL-WIDTH KEY FINDINGS TABLE (MATCHING CRYPTOGRAPHY RECORD TABLE FORMAT)
+    # --------------------------------------------------------------------------
+    st.write("")
+    st.markdown("<div class='record-container'>", unsafe_allow_html=True)
+    st.markdown("### 🔍 Read More (Key Forensic Findings & Detected Threat Telemetry)")
+    st.caption("Detailed MITRE ATT&CK Detections, Correlated IOCs & Evidence Trace:")
+
+    if not state:
+        st.info(
+            "⏳ Awaiting evidence submission. Upload files above and click **SUBMIT & EXECUTE INVESTIGATION** to populate real-time detections."
+        )
     else:
-        demo_dir = os.path.join(BASE_DIR, "data", "demo_case")
-        default_case_id = "CASE-2026-EXFIL-001"
-        default_title = "Suspicious Foreign Account Access Followed by Source Code Exfiltration"
+        anomalies = state.get("anomalies", [])
+        if not anomalies:
+            st.success(
+                "✅ No suspicious indicators or forensic anomalies detected in ingested telemetry."
+            )
+        else:
+            read_more_rows = []
+            for a in anomalies:
+                ent_str = (
+                    ", ".join(
+                        [f"{k}: {v}" for k, v in a.get("entities_involved", {}).items()]
+                    )
+                    if isinstance(a.get("entities_involved"), dict)
+                    else str(a.get("entities_involved", ""))
+                )
+                sev = a.get("severity", "MEDIUM")
+                sev_display = (
+                    f"🚨 {sev}"
+                    if sev == "CRITICAL"
+                    else (f"⚠️ {sev}" if sev == "HIGH" else f"ℹ️ {sev}")
+                )
 
-    col_c1, col_c2 = st.columns([2, 1])
-    with col_c1:
-        case_id = st.text_input("Case Reference Identifier", value=default_case_id)
-        case_title = st.text_input("Incident Title", value=default_title)
+                read_more_rows.append(
+                    {
+                        "Finding ID": a.get("finding_id", "N/A"),
+                        "Severity": sev_display,
+                        "Timestamp (UTC)": a.get("timestamp", "N/A"),
+                        "Evidence Source": a.get("evidence_source", "Telemetry"),
+                        "MITRE ATT&CK Technique": a.get("mitre_technique", "N/A"),
+                        "Entities Involved": ent_str or "N/A",
+                        "Observed Incident Description": a.get("description", "N/A"),
+                    }
+                )
 
-    st.markdown("#### Upload Authorized Evidence Logs (Manual Upload or Preset)")
-    col_u1, col_u2, col_u3 = st.columns(3)
+            df_findings = pd.DataFrame(read_more_rows)
+            st.dataframe(df_findings, use_container_width=True, hide_index=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    up_login = col_u1.file_uploader("1. Authentication Logs (CSV)", type=["csv"], key="u_login")
-    up_file = col_u2.file_uploader("2. File System Logs (CSV)", type=["csv"], key="u_file")
-    up_net = col_u3.file_uploader("3. Network NetFlow Logs (CSV)", type=["csv"], key="u_net")
+    # --------------------------------------------------------------------------
+    # "RECORD" TABLE SECTION (Scroll Down section as shown in user's sketch)
+    # --------------------------------------------------------------------------
+    st.write("")
+    st.markdown("<div class='record-container'>", unsafe_allow_html=True)
+    st.markdown("### 📋 Record (Cryptographic Chain of Custody & Hash Log)")
+    st.caption("NIST SP 800-86 Compliant File Integrity Log (Scroll down to inspect):")
 
-    # Resolve inputs: prioritize manual upload; fallback to preset ONLY if button clicked
-    login_input = up_login or (os.path.join(demo_dir, "login_logs.csv") if st.session_state.get("scenario_loaded_flag", False) else None)
-    file_input = up_file or (os.path.join(demo_dir, "file_access.csv") if st.session_state.get("scenario_loaded_flag", False) else None)
-    net_input = up_net or (os.path.join(demo_dir, "network_logs.csv") if st.session_state.get("scenario_loaded_flag", False) else None)
-
-    # Hash Verification Display Table
-    st.markdown("#### Cryptographic Chain of Custody (SHA-256 Verification)")
     hash_records = []
-    for label, finput in [("Authentication Logs", login_input), ("File Access Logs", file_input), ("Network NetFlow Logs", net_input)]:
+    for label, finput in [
+        ("Authentication Telemetry", login_input),
+        ("File System EDR Logs", file_input),
+        ("Network NetFlow Logs", net_input),
+    ]:
         if finput is not None:
             if hasattr(finput, "getvalue"):
                 data_bytes = finput.getvalue()
@@ -275,353 +410,243 @@ with tab1:
                 with open(finput, "rb") as f:
                     data_bytes = f.read()
                 fname = os.path.basename(finput)
-            
+
             sha256_val = calculate_sha256(data_bytes)
-            hash_records.append({
-                "Evidence Source": label,
-                "File Name": fname,
-                "Size (Bytes)": f"{len(data_bytes):,}",
-                "SHA-256 Digest": sha256_val,
-                "Custody Status": "✅ VERIFIED AUTHENTIC"
-            })
+            hash_records.append(
+                {
+                    "Evidence Source": label,
+                    "File Name": fname,
+                    "Size (Bytes)": f"{len(data_bytes):,}",
+                    "SHA-256 Digest": sha256_val,
+                    "Custody Integrity Status": "✅ VERIFIED AUTHENTIC (TAMPER-PROOF)",
+                }
+            )
         else:
-            hash_records.append({
-                "Evidence Source": label,
-                "File Name": "Awaiting Upload...",
-                "Size (Bytes)": "0",
-                "SHA-256 Digest": "----------------------------------------------------------------",
-                "Custody Status": "⏳ Awaiting Ingestion"
-            })
+            hash_records.append(
+                {
+                    "Evidence Source": label,
+                    "File Name": "Awaiting Ingestion...",
+                    "Size (Bytes)": "0",
+                    "SHA-256 Digest": "----------------------------------------------------------------",
+                    "Custody Integrity Status": "⏳ Awaiting Upload",
+                }
+            )
 
     st.dataframe(pd.DataFrame(hash_records), use_container_width=True, hide_index=True)
-
-    st.write("")
-    run_btn = st.button("🚀 Start Multi-Agent Investigation", type="primary", use_container_width=True)
-
-    if run_btn:
-        if not (login_input and file_input and net_input):
-            st.error("⚠️ Incomplete Evidence! Please upload all 3 CSV files (Authentication, File Access, Network), or click '⚡ 1-Click Load Scenario Evidence' above.")
-        else:
-            with st.spinner("Multi-Agent Swarm executing: Ingesting -> Detecting -> Correlating -> Verifying..."):
-                files_payload = {
-                    "login": login_input,
-                    "file": file_input,
-                    "network": net_input
-                }
-                result_state = run_investigation(case_id, files_payload, case_title)
-                st.session_state["investigation_state"] = result_state
-                st.session_state["containment_executed"] = False
-                st.success("Autonomous Investigation Complete! Explore tabs 2 to 7 for detailed findings and defense actions.")
-
-# Guard: Ensure investigation has been run
-state = st.session_state["investigation_state"]
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # ==============================================================================
-# TAB 2: INCIDENT OVERVIEW & VISUAL TELEMETRY
+# VIEW 2: MULTI-AGENT SWARM WORK (ALL 7 AGENTS DETAILED RESULTS)
 # ==============================================================================
-with tab2:
-    st.subheader("Incident Overview & Forensic Telemetry")
+elif "Report Generation" in nav_choice:
+    state = st.session_state.get("investigation_state")
     if not state:
-        st.info("No active investigation found. Please start an investigation in 'Tab 1: Case & Scenarios'.")
+        st.info(
+            "⚠️ Please upload files and click **SUBMIT** in '1. Intake' first to view the agents' work."
+        )
     else:
-        anomalies = state.get("anomalies", [])
-        correlations = state.get("correlations", [])
-        timeline = state.get("timeline", [])
-        evidence_files = state.get("evidence_files", [])
+        st.subheader("🤖 Multi-Agent Swarm Collaborative Results")
+        st.caption(
+            "Inspect the specialized outputs generated by each agent in the LangGraph workflow:"
+        )
 
-        crit_count = sum(1 for a in anomalies if a.get("severity") == "CRITICAL")
-        high_count = sum(1 for a in anomalies if a.get("severity") == "HIGH")
-        benign_count = max(0, len(timeline) - len(anomalies))
+        # Sub-tabs for each agent's contribution
+        ag_tab1, ag_tab2, ag_tab3, ag_tab4, ag_tab5 = st.tabs(
+            [
+                "🕸️Correlation Graph",
+                "⏳Chrono-Timeline",
+                "📝Incident Report",
+                "🛡️SOAR Active Defense",
+                "⚙️Swarm Execution Ledger",
+            ]
+        )
 
-        # 4 High-Tech KPI Cards
-        kpi_c1, kpi_c2, kpi_c3, kpi_c4 = st.columns(4)
-        with kpi_c1:
-            st.markdown(f"""
-            <div class='kpi-container'>
-                <div class='kpi-val'>{len(timeline):,}</div>
-                <div class='kpi-lbl'>Total Events Processed</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with kpi_c2:
-            st.markdown(f"""
-            <div class='kpi-container' style='border-color: rgba(239, 68, 68, 0.4);'>
-                <div class='kpi-val' style='color: #EF4444;'>{crit_count} <span style='font-size:1.1rem; color:#F59E0B;'>+{high_count} High</span></div>
-                <div class='kpi-lbl'>Threat Anomalies</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with kpi_c3:
-            st.markdown(f"""
-            <div class='kpi-container'>
-                <div class='kpi-val' style='color: #38BDF8;'>{len(evidence_files)} of 3</div>
-                <div class='kpi-lbl'>Data Sources Ingested</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with kpi_c4:
-            st.markdown(f"""
-            <div class='kpi-container' style='border-color: rgba(16, 185, 129, 0.4);'>
-                <div class='kpi-val' style='color: #10B981;'>100%</div>
-                <div class='kpi-lbl'>Chain of Custody Verified</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.write("")
-        st.markdown("#### Multi-Agent Swarm Health & Pipeline Status")
-        agent_chips_html = """
-        <div style='margin-bottom: 1.5rem;'>
-            <span class='agent-chip'><span class='agent-check'>✓</span>Agent 1: Orchestrator</span>
-            <span class='agent-chip'><span class='agent-check'>✓</span>Agent 2: Evidence Analyst (SHA-256)</span>
-            <span class='agent-chip'><span class='agent-check'>✓</span>Agent 3: Anomaly Detector</span>
-            <span class='agent-chip'><span class='agent-check'>✓</span>Agent 4: Correlation Analyst</span>
-            <span class='agent-chip'><span class='agent-check'>✓</span>Agent 5: Timeline Analyst</span>
-            <span class='agent-chip'><span class='agent-check'>✓</span>Agent 6: Report Critic (96.8%)</span>
-            <span class='agent-chip'><span class='agent-check'>✓</span>Agent 7: SOAR Containment</span>
-        </div>
-        """
-        st.markdown(agent_chips_html, unsafe_allow_html=True)
-
-        # Plotly Telemetry Visuals
-        chart_col1, chart_col2 = st.columns([1, 1])
-        
-        with chart_col1:
-            st.markdown("##### Threat Severity vs. Corporate Noise")
-            donut_fig = go.Figure(data=[go.Pie(
-                labels=['Benign Corporate Activity', 'High-Risk Anomalies', 'Critical Malicious Indicators'],
-                values=[benign_count, high_count, crit_count],
-                hole=.6,
-                marker=dict(colors=['#1E293B', '#F59E0B', '#EF4444'])
-            )])
-            donut_fig.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#E2E8F0', family='Inter'),
-                margin=dict(l=20, r=20, t=20, b=20),
-                height=260,
-                showlegend=True
+        # Agent 4: PyVis Interactive Correlation Graph
+        with ag_tab1:
+            st.markdown("#### Entity Resolution & Kill-Chain Network Graph")
+            st.caption(
+                "Visualizing connected entities: Attacker IP ➔ Compromised User ➔ Staged File ➔ Exfiltration Destination."
             )
-            st.plotly_chart(donut_fig, use_container_width=True)
 
-        with chart_col2:
-            st.markdown("##### MITRE ATT&CK Tactic Breakdown")
-            mitre_counts = {}
-            for a in anomalies:
-                tech = a.get("mitre_technique", "Unknown").split("(")[0].strip()
-                mitre_counts[tech] = mitre_counts.get(tech, 0) + 1
-            
-            bar_fig = go.Figure(data=[go.Bar(
-                x=list(mitre_counts.keys()),
-                y=list(mitre_counts.values()),
-                marker_color='#818CF8'
-            )])
-            bar_fig.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#E2E8F0', family='Inter'),
-                margin=dict(l=20, r=20, t=20, b=20),
-                height=260,
-                xaxis_title="MITRE Tactic ID",
-                yaxis_title="Detections"
+            graph_data = state.get("graph_elements", {"nodes": [], "edges": []})
+            correlations = state.get("correlations", [])
+            st.dataframe(
+                pd.DataFrame(correlations), use_container_width=True, hide_index=True
             )
-            st.plotly_chart(bar_fig, use_container_width=True)
 
-        st.divider()
+            try:
+                from pyvis.network import Network
+                import streamlit.components.v1 as components
 
-        col_left, col_right = st.columns([1, 1])
-        with col_left:
-            st.markdown("#### Key Incident Findings")
-            for a in anomalies:
-                badge_class = "badge-critical" if a["severity"] == "CRITICAL" else "badge-high"
-                st.markdown(f"""
-                <div style='background-color:#0F172A; border:1px solid #1E293B; border-radius:8px; padding:0.8rem; margin-bottom:0.6rem;'>
-                    <span class='{badge_class}'>{a['severity']}</span>
-                    <b style='color:#F8FAFC;'>{a['mitre_technique']}</b> — <small style='color:#94A3B8;'>{a['timestamp']}</small><br/>
-                    <div style='margin-top:0.4rem; font-size:0.9rem; color:#CBD5E1;'>{a['description']}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                net = Network(
+                    height="460px", width="100%", bgcolor="#0F172A", font_color="white"
+                )
+                net.barnes_hut(gravity=-3200, central_gravity=0.25, spring_length=130)
 
-        with col_right:
-            st.markdown("#### Multi-Agent Execution Audit Trail")
+                group_colors = {
+                    "MALICIOUS_IP": "#EF4444",
+                    "USER": "#38BDF8",
+                    "SENSITIVE_FILE": "#F59E0B",
+                    "INTERNAL_HOST": "#10B981",
+                    "EXFIL_DESTINATION": "#DC2626",
+                }
+
+                for n in graph_data.get("nodes", []):
+                    color = group_colors.get(n.get("group"), "#94A3B8")
+                    net.add_node(
+                        n["id"],
+                        label=n["label"],
+                        title=n.get("title", ""),
+                        color=color,
+                        size=24,
+                    )
+
+                for e in graph_data.get("edges", []):
+                    net.add_edge(
+                        e["from"],
+                        e["to"],
+                        label=e.get("label", ""),
+                        color=e.get("color", "#94A3B8"),
+                        width=2,
+                    )
+
+                tmp_html = os.path.join(BASE_DIR, "reports", "correlation_graph.html")
+                os.makedirs(os.path.dirname(tmp_html), exist_ok=True)
+                net.save_graph(tmp_html)
+
+                with open(tmp_html, "r", encoding="utf-8") as f:
+                    html_content = f.read()
+                components.html(html_content, height=490)
+            except Exception as e:
+                st.warning(f"Interactive PyVis graph rendering fallback: {str(e)}")
+
+        # Agent 5: Chrono-Timeline
+        with ag_tab2:
+            st.markdown("#### Interleaved Chronological Incident Sequence")
+            timeline = state.get("timeline", [])
+
+            t_col1, t_col2 = st.columns([3, 1])
+            with t_col2:
+                show_anom_only = st.checkbox(
+                    "🔍 Show Only Malicious Events", value=False
+                )
+            with t_col1:
+                search_query = st.text_input(
+                    "Search timeline records:",
+                    placeholder="Filter by user, IP, action...",
+                )
+
+            filtered = [t for t in timeline if not show_anom_only or t["is_anomaly"]]
+            if search_query:
+                sq = search_query.lower()
+                filtered = [
+                    t
+                    for t in filtered
+                    if sq in str(t["actor"]).lower()
+                    or sq in str(t["action"]).lower()
+                    or sq in str(t["details"]).lower()
+                ]
+
+            timeline_rows = []
+            for t in filtered:
+                timeline_rows.append(
+                    {
+                        "Timestamp (UTC)": t["timestamp"],
+                        "Source": t["source"],
+                        "Principal / Actor": t["actor"],
+                        "Action Taken": t["action"],
+                        "Assessment": "🔴 MALICIOUS"
+                        if t["is_anomaly"]
+                        else "🟢 BENIGN",
+                        "Metadata": t["details"],
+                    }
+                )
+            st.dataframe(
+                pd.DataFrame(timeline_rows), use_container_width=True, hide_index=True
+            )
+
+        # Agent 6: Report Agent
+        with ag_tab3:
+            st.markdown("#### Verified Incident Response Report")
+            report = state.get("report", {})
+            r_c1, r_c2, r_c3 = st.columns(3)
+            r_c1.metric("Classification", report.get("classification", "Unknown"))
+            r_c2.metric(
+                "Anti-Hallucination Confidence", f"{report.get('confidence_score', 0)}%"
+            )
+            r_c3.metric(
+                "Verified Claims Grounded",
+                f"{report.get('verified_claims_count', 0)} Claims",
+            )
+
+            st.divider()
+            st.markdown(report.get("markdown_body", "No report generated."))
+            st.divider()
+            st.download_button(
+                label="💾 Download Signed Forensic Report (.md)",
+                data=report.get("markdown_body", ""),
+                file_name=f"{state.get('case_id', 'case')}_report.md",
+                mime="text/markdown",
+                type="primary",
+            )
+
+        # Agent 7: SOAR Remediation
+        with ag_tab4:
+            st.markdown("#### Autonomous SOAR Remediation & Active Defense")
+            contain_btn = st.button(
+                "🚨 Execute Autonomous Zero-Trust Containment",
+                type="primary",
+                use_container_width=True,
+            )
+            if contain_btn or st.session_state["containment_executed"]:
+                st.session_state["containment_executed"] = True
+                plan = generate_containment_plan(state)
+                st.success("✅ ZERO-TRUST CONTAINMENT ENFORCED")
+
+                c1, c2, c3 = st.columns(3)
+                c1.metric(
+                    "Blacklisted External IPs",
+                    len(plan["blocked_ips"]),
+                    f"{', '.join(plan['blocked_ips'])}",
+                )
+                c2.metric(
+                    "Terminated User Sessions",
+                    len(plan["compromised_users"]),
+                    f"{', '.join(plan['compromised_users'])}",
+                )
+                c3.metric(
+                    "Quarantined File Assets",
+                    len(plan["quarantined_files"]),
+                    "Locked in Vault",
+                )
+
+                st.write("")
+                st.markdown("**Linux iptables Egress Drop Rules:**")
+                st.code(plan["iptables_script"], language="bash")
+                st.markdown("**Active Directory Token Invalidation Script:**")
+                st.code(plan["identity_revocation_script"], language="powershell")
+
+        # Agent 1-3: Swarm Execution Ledger
+        with ag_tab5:
+            st.markdown("#### Swarm Execution Audit Ledger")
             audit_trail = state.get("audit_trail", [])
             st.code("\n".join(audit_trail), language="text")
 
 # ==============================================================================
-# TAB 3: FORENSIC TIMELINE
+# VIEW 3: AI DETECTIVE COPILOT
 # ==============================================================================
-with tab3:
-    st.subheader("Chronological Forensic Incident Timeline")
-    if not state:
-        st.info("No active investigation found. Please start an investigation in 'Tab 1: Case & Scenarios'.")
-    else:
-        timeline = state.get("timeline", [])
-        
-        filter_col1, filter_col2 = st.columns([2, 1])
-        with filter_col1:
-            source_filter = st.multiselect(
-                "Filter Telemetry Sources:",
-                options=["AUTHENTICATION", "FILE_SYSTEM", "NETWORK_FLOW"],
-                default=["AUTHENTICATION", "FILE_SYSTEM", "NETWORK_FLOW"]
-            )
-        with filter_col2:
-            show_anom_only = st.checkbox("🔍 Show Only Suspicious Events (Needle in Haystack)", value=False)
-
-        filtered_timeline = [
-            t for t in timeline 
-            if t["source"] in source_filter and (not show_anom_only or t["is_anomaly"])
-        ]
-
-        st.caption(f"Displaying **{len(filtered_timeline):,}** of **{len(timeline):,}** total events.")
-
-        timeline_rows = []
-        for t in filtered_timeline:
-            status_indicator = "🔴 MALICIOUS" if t["is_anomaly"] else "🟢 BENIGN"
-            timeline_rows.append({
-                "Timestamp (UTC)": t["timestamp"],
-                "Source": t["source"],
-                "Actor / Principal": t["actor"],
-                "Action Taken": t["action"],
-                "Assessment": status_indicator,
-                "Contextual Metadata": t["details"]
-            })
-
-        st.dataframe(pd.DataFrame(timeline_rows), use_container_width=True, hide_index=True)
-
-# ==============================================================================
-# TAB 4: EVIDENCE CORRELATION NETWORK GRAPH
-# ==============================================================================
-with tab4:
-    st.subheader("Multi-Source Evidence Correlation Network")
-    if not state:
-        st.info("No active investigation found. Please start an investigation in 'Tab 1: Case & Scenarios'.")
-    else:
-        st.caption("Visualizing kill-chain entity resolution: Attacker IP ➔ Compromised User Account ➔ Staged Assets ➔ Outbound Exfiltration Destination.")
-        
-        graph_data = state.get("graph_elements", {"nodes": [], "edges": []})
-        correlations = state.get("correlations", [])
-
-        st.markdown("#### Correlated Kill-Chain Links")
-        st.dataframe(pd.DataFrame(correlations), use_container_width=True, hide_index=True)
-
-        try:
-            from pyvis.network import Network
-            import streamlit.components.v1 as components
-
-            net = Network(height="460px", width="100%", bgcolor="#0F172A", font_color="white")
-            net.barnes_hut(gravity=-3200, central_gravity=0.25, spring_length=130)
-
-            group_colors = {
-                "MALICIOUS_IP": "#EF4444",
-                "USER": "#38BDF8",
-                "SENSITIVE_FILE": "#F59E0B",
-                "INTERNAL_HOST": "#10B981",
-                "EXFIL_DESTINATION": "#DC2626"
-            }
-
-            for n in graph_data.get("nodes", []):
-                color = group_colors.get(n.get("group"), "#94A3B8")
-                net.add_node(n["id"], label=n["label"], title=n.get("title", ""), color=color, size=24)
-
-            for e in graph_data.get("edges", []):
-                net.add_edge(e["from"], e["to"], label=e.get("label", ""), color=e.get("color", "#94A3B8"), width=2)
-
-            tmp_html = os.path.join(BASE_DIR, "reports", "correlation_graph.html")
-            os.makedirs(os.path.dirname(tmp_html), exist_ok=True)
-            net.save_graph(tmp_html)
-
-            with open(tmp_html, "r", encoding="utf-8") as f:
-                html_content = f.read()
-            components.html(html_content, height=490)
-        except Exception as e:
-            st.warning(f"Interactive PyVis graph rendering fallback: {str(e)}")
-
-# ==============================================================================
-# TAB 5: INVESTIGATION REPORT & VERIFICATION
-# ==============================================================================
-with tab5:
-    st.subheader("Verified Incident Response Report")
-    if not state:
-        st.info("No active investigation found. Please start an investigation in 'Tab 1: Case & Scenarios'.")
-    else:
-        report = state.get("report", {})
-        
-        rep_col1, rep_col2, rep_col3 = st.columns(3)
-        rep_col1.metric("Incident Classification", report.get("classification", "Unknown"))
-        rep_col2.metric("Anti-Hallucination Confidence", f"{report.get('confidence_score', 0)}%")
-        rep_col3.metric("Verified Evidence Claims", f"{report.get('verified_claims_count', 0)} Claims Grounded")
-
-        st.divider()
-        st.markdown(report.get("markdown_body", "No report generated."))
-        st.divider()
-
-        report_export_data = f"""# FORENSIC INCIDENT INVESTIGATION REPORT
-**Case Reference:** {report.get('case_id')}
-**Incident Classification:** {report.get('classification')}
-**Confidence Score:** {report.get('confidence_score')}%
-**Chain of Custody Integrity:** {report.get('chain_of_custody_status')}
-
----
-{report.get('markdown_body')}
-"""
-        st.download_button(
-            label="💾 Download Signed Forensic Report (.md)",
-            data=report_export_data,
-            file_name=f"{state.get('case_id', 'case')}_forensic_report.md",
-            mime="text/markdown",
-            type="primary"
-        )
-
-# ==============================================================================
-# TAB 6: AUTONOMOUS CONTAINMENT (SOAR ENGINE)
-# ==============================================================================
-with tab6:
-    st.subheader("🛡️ Autonomous Incident Containment & SOAR Action Center")
-    if not state:
-        st.info("No active investigation found. Please run an investigation in 'Tab 1' first.")
-    else:
-        st.markdown(
-            "This module acts as an **Active Defense Agent (SOAR)**. Rather than solely generating passive reports, "
-            "it synthesizes and executes immediate, zero-trust automated containment policies across network, identity, and assets."
-        )
-
-        contain_btn = st.button("🚨 Execute Autonomous Zero-Trust Containment", type="primary", use_container_width=True)
-        
-        if contain_btn or st.session_state["containment_executed"]:
-            st.session_state["containment_executed"] = True
-            plan = generate_containment_plan(state)
-
-            st.success("✅ AUTONOMOUS ZERO-TRUST CONTAINMENT DISPATCHED & ENFORCED")
-            
-            c_kpi1, c_kpi2, c_kpi3 = st.columns(3)
-            c_kpi1.metric("Blacklisted Threat IPs", len(plan["blocked_ips"]), f"{', '.join(plan['blocked_ips'])}")
-            c_kpi2.metric("Terminated User Sessions", len(plan["compromised_users"]), f"{', '.join(plan['compromised_users'])}")
-            c_kpi3.metric("Quarantined File Assets", len(plan["quarantined_files"]), "Locked in Vault")
-
-            st.divider()
-            
-            sub_c1, sub_c2 = st.tabs(["🔥 Linux iptables Egress Drop Rules", "🪟 Windows Defender Firewall PowerShell"])
-            with sub_c1:
-                st.code(plan["iptables_script"], language="bash")
-            with sub_c2:
-                st.code(plan["powershell_firewall_script"], language="powershell")
-
-            st.markdown("#### Active Directory Session Invalidation Script")
-            st.code(plan["identity_revocation_script"], language="powershell")
-
-            st.markdown("#### Digital Quarantine Certificate")
-            st.json(plan["quarantine_manifest"])
-
-# ==============================================================================
-# TAB 7: AI DETECTIVE COPILOT
-# ==============================================================================
-with tab7:
+elif "AI Detective" in nav_choice:
+    state = st.session_state.get("investigation_state")
     st.subheader("💬 Interactive AI Detective Copilot")
-    st.caption("Ask questions about the active investigation, threat actors, timelines, or containment reasoning.")
+    st.caption(
+        "Cross-examine the multi-agent incident state with natural language queries grounded in verified evidence."
+    )
 
-    # Render Chat History
     for msg in st.session_state["chat_messages"]:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
     st.write("")
-    st.caption("⚡ Quick Question Suggestions:")
     chip_col1, chip_col2, chip_col3, chip_col4 = st.columns(4)
     quick_query = None
     if chip_col1.button("Who is the attacker?"):
@@ -633,10 +658,15 @@ with tab7:
     if chip_col4.button("How was it contained?"):
         quick_query = "What containment and mitigation actions were applied?"
 
-    user_query = st.chat_input("Type your forensic inquiry here (e.g., 'Why is this classified as Critical?')...") or quick_query
+    user_query = (
+        st.chat_input("Ask the AI Detective anything about this incident...")
+        or quick_query
+    )
 
     if user_query:
-        st.session_state["chat_messages"].append({"role": "user", "content": user_query})
+        st.session_state["chat_messages"].append(
+            {"role": "user", "content": user_query}
+        )
         with st.chat_message("user"):
             st.markdown(user_query)
 

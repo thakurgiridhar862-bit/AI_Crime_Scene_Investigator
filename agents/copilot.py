@@ -52,20 +52,20 @@ def answer_investigation_query(query: str, state: Dict[str, Any]) -> str:
 
     # High-speed deterministic fallback reasoning engine
     if any(k in q_lower for k in ["who", "user", "actor", "account", "attacker"]):
-        users = set([a["entities_involved"].get("user") for a in anomalies if "user" in a.get("entities_involved", {})])
-        ips = set([a["entities_involved"].get("ip") for a in anomalies if "ip" in a.get("entities_involved", {})])
-        return (f"**Identified Actor:** Suspicious activity was traced to user account(s): `{', '.join(users)}`. "
-                f"Authentication originated from remote IP address(es): `{', '.join(ips)}`.")
+        users = set([str(a["entities_involved"].get("user")) for a in anomalies if a.get("entities_involved", {}).get("user")])
+        ips = set([str(a["entities_involved"].get("ip")) for a in anomalies if a.get("entities_involved", {}).get("ip")])
+        return (f"**Identified Actor:** Suspicious activity was traced to user account(s): `{', '.join(users) or 'Unknown'}`. "
+                f"Authentication originated from remote IP address(es): `{', '.join(ips) or 'Unknown'}`.")
 
     if any(k in q_lower for k in ["ip", "address", "destination", "external"]):
-        dest_ips = set([a["entities_involved"].get("dest_ip") for a in anomalies if "dest_ip" in a.get("entities_involved", {})])
-        src_ips = set([a["entities_involved"].get("ip") for a in anomalies if "ip" in a.get("entities_involved", {})])
+        dest_ips = set([str(a["entities_involved"].get("dest_ip")) for a in anomalies if a.get("entities_involved", {}).get("dest_ip")])
+        src_ips = set([str(a["entities_involved"].get("ip")) for a in anomalies if a.get("entities_involved", {}).get("ip")])
         return (f"**IP Network Forensics:**\n"
                 f"- **Attacker Ingress IP:** `{', '.join(src_ips) or 'N/A'}`\n"
                 f"- **Exfiltration Destination IP:** `{', '.join(dest_ips) or 'N/A'}`.")
 
     if any(k in q_lower for k in ["file", "stolen", "download", "sensitive", "data", "size"]):
-        files = set([a["entities_involved"].get("file") for a in anomalies if "file" in a.get("entities_involved", {})])
+        files = set([str(a["entities_involved"].get("file")) for a in anomalies if a.get("entities_involved", {}).get("file")])
         net_anoms = [a for a in anomalies if a.get("evidence_source") == "network_logs.csv"]
         desc = net_anoms[0]["description"] if net_anoms else "High-volume data transfer"
         return (f"**Data Exfiltration Analysis:**\n"
