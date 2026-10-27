@@ -20,7 +20,7 @@ st.set_page_config(
     page_title="AI Digital Crime Scene Investigator",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed",
 )
 
 # Custom Styling (Dark Cyber Forensics Theme)
@@ -33,10 +33,9 @@ st.markdown(
         font-family: 'Inter', sans-serif;
     }
 
-    /* Custom Left Sidebar styling */
+    /* Completely hide Streamlit default sidebar */
     [data-testid="stSidebar"] {
-        background-color: #0B1120 !important;
-        border-right: 1px solid #1E293B !important;
+        display: none !important;
     }
     
     /* Top Header */
@@ -148,60 +147,17 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Left Sidebar Navigation (Matching user's sketch)
-with st.sidebar:
-    st.markdown(
-        """
-    <div style='padding: 0.2rem 0 1rem 0;'>
-        <div style='font-size: 1.25rem; font-weight: 800; background: linear-gradient(90deg, #38BDF8, #818CF8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>
-            🛡️ AI Crime Scene
-        </div>
-        <div style='font-size: 0.78rem; color: #94A3B8;'>Digital Investigator & SOAR</div>
-    </div>
-    """,
-        unsafe_allow_html=True,
-    )
-
-    nav_choice = st.radio(
-        "Navigation",
-        [
-            "📥 User Input",
-            "🤖 Report Generation",
-            "💬 AI Detective Copilot",
-        ],
-        index=0,
-    )
-
-    agent_subchoice = "🕸️ Correlation Graph"
-    if nav_choice == "🤖 Report Generation":
-        st.write("")
-        st.markdown(
-            "<div style='font-size: 0.75rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem;'>Report Modules</div>",
-            unsafe_allow_html=True,
-        )
-        agent_subchoice = st.radio(
-            "Swarm Modules",
-            [
-                "🕸️ Correlation Graph",
-                "⏳ Chrono-Timeline",
-                "📝 Incident Report",
-                "🛡️ SOAR Active Defense",
-                "⚙️ Swarm Execution Ledger",
-            ],
-            index=0,
-            label_visibility="collapsed",
-        )
-
-    st.write("")
-    st.markdown(
-        """
-    <div style='background: rgba(16,185,129,0.1); border: 1px solid #10B981; border-radius: 6px; padding: 0.6rem 0.8rem; margin-top: 1.2rem;'>
-        <div style='color: #10B981; font-weight: 700; font-size: 0.75rem; font-family: monospace;'>● SWARM ACTIVE (7 AGENTS)</div>
-        <div style='color: #94A3B8; font-size: 0.72rem; margin-top: 2px;'>NIST SP 800-86 Compliant</div>
-    </div>
-    """,
-        unsafe_allow_html=True,
-    )
+# Clean Horizontal Navigation (The 3 horizontal buttons at the top)
+nav_choice = st.radio(
+    "Navigation Menu",
+    [
+        "📥 User Input",
+        "🤖 Report Generation",
+        "💬 AI Detective Copilot",
+    ],
+    horizontal=True,
+    label_visibility="collapsed",
+)
 
 st.write("")
 
@@ -495,253 +451,288 @@ elif "Report Generation" in nav_choice:
         )
 
         st.write("")
+        col_nav, col_main = st.columns([0.27, 0.73], gap="large")
 
-        # Agent 4: PyVis Interactive Correlation Graph
-        if "Correlation Graph" in agent_subchoice:
-            st.markdown("#### Entity Resolution & Kill-Chain Network Graph")
-            st.caption(
-                "Visualizing connected entities: Attacker IP ➔ Compromised User ➔ Staged File ➔ Exfiltration Destination."
-            )
-
-            graph_data = state.get("graph_elements", {"nodes": [], "edges": []})
-            correlations = state.get("correlations", [])
-            st.dataframe(
-                pd.DataFrame(correlations), use_container_width=True, hide_index=True
-            )
-
-            try:
-                from pyvis.network import Network
-                import streamlit.components.v1 as components
-
-                net = Network(
-                    height="500px", width="100%", bgcolor="#0B1120", font_color="#FFFFFF"
-                )
-
-                group_colors = {
-                    "MALICIOUS_IP": {"background": "#EF4444", "border": "#DC2626"},
-                    "USER": {"background": "#0284C7", "border": "#0369A1"},
-                    "SENSITIVE_FILE": {"background": "#D97706", "border": "#B45309"},
-                    "INTERNAL_HOST": {"background": "#059669", "border": "#047857"},
-                    "EXFIL_DESTINATION": {"background": "#991B1B", "border": "#7F1D1D"},
-                }
-
-                for n in graph_data.get("nodes", []):
-                    col_spec = group_colors.get(n.get("group"), {"background": "#475569", "border": "#334155"})
-                    net.add_node(
-                        n["id"],
-                        label=n["label"],
-                        title=n.get("title", ""),
-                        color=col_spec,
-                        size=26,
-                        shape="dot",
-                        borderWidth=2,
-                        font={
-                            "color": "#F8FAFC",
-                            "size": 12,
-                            "face": "Inter, sans-serif",
-                            "background": "#0F172A",
-                            "strokeWidth": 2,
-                            "strokeColor": "#1E293B"
-                        }
-                    )
-
-                for e in graph_data.get("edges", []):
-                    net.add_edge(
-                        e["from"],
-                        e["to"],
-                        label=e.get("label", ""),
-                        color=e.get("color", "#94A3B8"),
-                        width=2,
-                        arrows={"to": {"enabled": True, "scaleFactor": 0.8}},
-                        font={
-                            "color": "#CBD5E1",
-                            "size": 11,
-                            "face": "Inter, sans-serif",
-                            "background": "#0F172A",
-                            "strokeWidth": 0,
-                            "align": "horizontal"
-                        }
-                    )
-
-                # Set physics and options to guarantee clean layout and zero overlaps
-                net.set_options("""
-                var options = {
-                  "nodes": {
-                    "shadow": { "enabled": true, "color": "rgba(0,0,0,0.5)", "size": 6 }
-                  },
-                  "edges": {
-                    "smooth": {
-                      "type": "curvedCW",
-                      "roundness": 0.2
-                    }
-                  },
-                  "physics": {
-                    "barnesHut": {
-                      "gravitationalConstant": -8000,
-                      "centralGravity": 0.15,
-                      "springLength": 240,
-                      "springConstant": 0.04,
-                      "damping": 0.09,
-                      "avoidOverlap": 0.7
-                    },
-                    "minVelocity": 0.75
-                  },
-                  "interaction": {
-                    "hover": true,
-                    "zoomView": true,
-                    "dragView": true
-                  }
-                }
-                """)
-
-                tmp_html = os.path.join(BASE_DIR, "reports", "correlation_graph.html")
-                os.makedirs(os.path.dirname(tmp_html), exist_ok=True)
-                net.save_graph(tmp_html)
-
-                with open(tmp_html, "r", encoding="utf-8") as f:
-                    html_content = f.read()
-
-                # Clean dark theme injection - eliminate ugly white borders and card margins
-                custom_theme_css = """
-                <style>
-                    html, body {
-                        background-color: #0B1120 !important;
-                        margin: 0 !important;
-                        padding: 0 !important;
-                        overflow: hidden !important;
-                    }
-                    .card {
-                        background-color: #0B1120 !important;
-                        border: none !important;
-                        box-shadow: none !important;
-                    }
-                    #mynetwork {
-                        background-color: #0B1120 !important;
-                        border: 1px solid #1E293B !important;
-                        border-radius: 10px !important;
-                        box-shadow: inset 0 2px 10px rgba(0,0,0,0.4) !important;
-                    }
-                    center, h1 {
-                        display: none !important;
-                    }
-                </style>
+        with col_nav:
+            st.markdown(
                 """
-                html_content = html_content.replace("<head>", f"<head>{custom_theme_css}")
-                components.html(html_content, height=520)
-            except Exception as e:
-                st.warning(f"Interactive PyVis graph rendering fallback: {str(e)}")
+            <div style='background: #0F172A; border: 1px solid #1E293B; border-radius: 8px; padding: 0.9rem; margin-bottom: 0.8rem;'>
+                <div style='font-size: 0.85rem; font-weight: 700; color: #38BDF8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6rem;'>
+                    📁 Swarm Modules
+                </div>
+            """,
+                unsafe_allow_html=True,
+            )
+            agent_subchoice = st.radio(
+                "Swarm Modules",
+                [
+                    "🕸️ Correlation Graph",
+                    "⏳ Chrono-Timeline",
+                    "📝 Incident Report",
+                    "🛡️ SOAR Active Defense",
+                    "⚙️ Swarm Execution Ledger",
+                ],
+                index=0,
+                label_visibility="collapsed",
+            )
+            st.markdown(
+                """
+            </div>
+            <div style='background: rgba(16,185,129,0.1); border: 1px solid #10B981; border-radius: 8px; padding: 0.8rem; margin-top: 0.6rem;'>
+                <div style='color: #10B981; font-weight: 700; font-size: 0.75rem; font-family: monospace;'>● SWARM ACTIVE (7 AGENTS)</div>
+                <div style='color: #94A3B8; font-size: 0.72rem; margin-top: 4px;'>NIST SP 800-86 Compliant Forensic Engine</div>
+            </div>
+            """,
+                unsafe_allow_html=True,
+            )
 
-        # Agent 5: Chrono-Timeline
-        elif "Chrono-Timeline" in agent_subchoice:
-            st.markdown("#### Interleaved Chronological Incident Sequence")
-            timeline = state.get("timeline", [])
-
-            t_col1, t_col2 = st.columns([3, 1])
-            with t_col2:
-                show_anom_only = st.checkbox(
-                    "🔍 Show Only Malicious Events", value=False
+        with col_main:
+            # Agent 4: PyVis Interactive Correlation Graph
+            if "Correlation Graph" in agent_subchoice:
+                st.markdown("#### Entity Resolution & Kill-Chain Network Graph")
+                st.caption(
+                    "Visualizing connected entities: Attacker IP ➔ Compromised User ➔ Staged File ➔ Exfiltration Destination."
                 )
-            with t_col1:
-                search_query = st.text_input(
-                    "Search timeline records:",
-                    placeholder="Filter by user, IP, action...",
+
+                graph_data = state.get("graph_elements", {"nodes": [], "edges": []})
+                correlations = state.get("correlations", [])
+                st.dataframe(
+                    pd.DataFrame(correlations), use_container_width=True, hide_index=True
                 )
 
-            filtered = [t for t in timeline if not show_anom_only or t["is_anomaly"]]
-            if search_query:
-                sq = search_query.lower()
-                filtered = [
-                    t
-                    for t in filtered
-                    if sq in str(t["actor"]).lower()
-                    or sq in str(t["action"]).lower()
-                    or sq in str(t["details"]).lower()
-                ]
+                try:
+                    from pyvis.network import Network
+                    import streamlit.components.v1 as components
 
-            timeline_rows = []
-            for t in filtered:
-                timeline_rows.append(
-                    {
-                        "Timestamp (UTC)": t["timestamp"],
-                        "Source": t["source"],
-                        "Principal / Actor": t["actor"],
-                        "Action Taken": t["action"],
-                        "Assessment": "🔴 MALICIOUS"
-                        if t["is_anomaly"]
-                        else "🟢 BENIGN",
-                        "Metadata": t["details"],
+                    net = Network(
+                        height="500px", width="100%", bgcolor="#0B1120", font_color="#FFFFFF"
+                    )
+
+                    group_colors = {
+                        "MALICIOUS_IP": {"background": "#EF4444", "border": "#DC2626"},
+                        "USER": {"background": "#0284C7", "border": "#0369A1"},
+                        "SENSITIVE_FILE": {"background": "#D97706", "border": "#B45309"},
+                        "INTERNAL_HOST": {"background": "#059669", "border": "#047857"},
+                        "EXFIL_DESTINATION": {"background": "#991B1B", "border": "#7F1D1D"},
                     }
+
+                    for n in graph_data.get("nodes", []):
+                        col_spec = group_colors.get(n.get("group"), {"background": "#475569", "border": "#334155"})
+                        net.add_node(
+                            n["id"],
+                            label=n["label"],
+                            title=n.get("title", ""),
+                            color=col_spec,
+                            size=26,
+                            shape="dot",
+                            borderWidth=2,
+                            font={
+                                "color": "#F8FAFC",
+                                "size": 12,
+                                "face": "Inter, sans-serif",
+                                "background": "#0F172A",
+                                "strokeWidth": 2,
+                                "strokeColor": "#1E293B"
+                            }
+                        )
+
+                    for e in graph_data.get("edges", []):
+                        net.add_edge(
+                            e["from"],
+                            e["to"],
+                            label=e.get("label", ""),
+                            color=e.get("color", "#94A3B8"),
+                            width=2,
+                            arrows={"to": {"enabled": True, "scaleFactor": 0.8}},
+                            font={
+                                "color": "#CBD5E1",
+                                "size": 11,
+                                "face": "Inter, sans-serif",
+                                "background": "#0F172A",
+                                "strokeWidth": 0,
+                                "align": "horizontal"
+                            }
+                        )
+
+                    # Set physics and options to guarantee clean layout and zero overlaps
+                    net.set_options("""
+                    var options = {
+                      "nodes": {
+                        "shadow": { "enabled": true, "color": "rgba(0,0,0,0.5)", "size": 6 }
+                      },
+                      "edges": {
+                        "smooth": {
+                          "type": "curvedCW",
+                          "roundness": 0.2
+                        }
+                      },
+                      "physics": {
+                        "barnesHut": {
+                          "gravitationalConstant": -8000,
+                          "centralGravity": 0.15,
+                          "springLength": 240,
+                          "springConstant": 0.04,
+                          "damping": 0.09,
+                          "avoidOverlap": 0.7
+                        },
+                        "minVelocity": 0.75
+                      },
+                      "interaction": {
+                        "hover": true,
+                        "zoomView": true,
+                        "dragView": true
+                      }
+                    }
+                    """)
+
+                    tmp_html = os.path.join(BASE_DIR, "reports", "correlation_graph.html")
+                    os.makedirs(os.path.dirname(tmp_html), exist_ok=True)
+                    net.save_graph(tmp_html)
+
+                    with open(tmp_html, "r", encoding="utf-8") as f:
+                        html_content = f.read()
+
+                    # Clean dark theme injection - eliminate ugly white borders and card margins
+                    custom_theme_css = """
+                    <style>
+                        html, body {
+                            background-color: #0B1120 !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            overflow: hidden !important;
+                        }
+                        .card {
+                            background-color: #0B1120 !important;
+                            border: none !important;
+                            box-shadow: none !important;
+                        }
+                        #mynetwork {
+                            background-color: #0B1120 !important;
+                            border: 1px solid #1E293B !important;
+                            border-radius: 10px !important;
+                            box-shadow: inset 0 2px 10px rgba(0,0,0,0.4) !important;
+                        }
+                        center, h1 {
+                            display: none !important;
+                        }
+                    </style>
+                    """
+                    html_content = html_content.replace("<head>", f"<head>{custom_theme_css}")
+                    components.html(html_content, height=520)
+                except Exception as e:
+                    st.warning(f"Interactive PyVis graph rendering fallback: {str(e)}")
+
+            # Agent 5: Chrono-Timeline
+            elif "Chrono-Timeline" in agent_subchoice:
+                st.markdown("#### Interleaved Chronological Incident Sequence")
+                timeline = state.get("timeline", [])
+
+                t_col1, t_col2 = st.columns([3, 1])
+                with t_col2:
+                    show_anom_only = st.checkbox(
+                        "🔍 Show Only Malicious Events", value=False
+                    )
+                with t_col1:
+                    search_query = st.text_input(
+                        "Search timeline records:",
+                        placeholder="Filter by user, IP, action...",
+                    )
+
+                filtered = [t for t in timeline if not show_anom_only or t["is_anomaly"]]
+                if search_query:
+                    sq = search_query.lower()
+                    filtered = [
+                        t
+                        for t in filtered
+                        if sq in str(t["actor"]).lower()
+                        or sq in str(t["action"]).lower()
+                        or sq in str(t["details"]).lower()
+                    ]
+
+                timeline_rows = []
+                for t in filtered:
+                    timeline_rows.append(
+                        {
+                            "Timestamp (UTC)": t["timestamp"],
+                            "Source": t["source"],
+                            "Principal / Actor": t["actor"],
+                            "Action Taken": t["action"],
+                            "Assessment": "🔴 MALICIOUS"
+                            if t["is_anomaly"]
+                            else "🟢 BENIGN",
+                            "Metadata": t["details"],
+                        }
+                    )
+                st.dataframe(
+                    pd.DataFrame(timeline_rows), use_container_width=True, hide_index=True
                 )
-            st.dataframe(
-                pd.DataFrame(timeline_rows), use_container_width=True, hide_index=True
-            )
 
-        # Agent 6: Report Agent
-        elif "Incident Report" in agent_subchoice:
-            st.markdown("#### Verified Incident Response Report")
-            report = state.get("report", {})
-            r_c1, r_c2, r_c3 = st.columns(3)
-            r_c1.metric("Classification", report.get("classification", "Unknown"))
-            r_c2.metric(
-                "Anti-Hallucination Confidence", f"{report.get('confidence_score', 0)}%"
-            )
-            r_c3.metric(
-                "Verified Claims Grounded",
-                f"{report.get('verified_claims_count', 0)} Claims",
-            )
-
-            st.divider()
-            st.markdown(report.get("markdown_body", "No report generated."))
-            st.divider()
-            st.download_button(
-                label="💾 Download Signed Forensic Report (.md)",
-                data=report.get("markdown_body", ""),
-                file_name=f"{state.get('case_id', 'case')}_report.md",
-                mime="text/markdown",
-                type="primary",
-            )
-
-        # Agent 7: SOAR Remediation
-        elif "SOAR Active Defense" in agent_subchoice:
-            st.markdown("#### Autonomous SOAR Remediation & Active Defense")
-            contain_btn = st.button(
-                "🚨 Execute Autonomous Zero-Trust Containment",
-                type="primary",
-                use_container_width=True,
-            )
-            if contain_btn or st.session_state["containment_executed"]:
-                st.session_state["containment_executed"] = True
-                plan = generate_containment_plan(state)
-                st.success("✅ ZERO-TRUST CONTAINMENT ENFORCED")
-
-                c1, c2, c3 = st.columns(3)
-                c1.metric(
-                    "Blacklisted External IPs",
-                    len(plan["blocked_ips"]),
-                    f"{', '.join(plan['blocked_ips'])}",
+            # Agent 6: Report Agent
+            elif "Incident Report" in agent_subchoice:
+                st.markdown("#### Verified Incident Response Report")
+                report = state.get("report", {})
+                r_c1, r_c2, r_c3 = st.columns(3)
+                r_c1.metric("Classification", report.get("classification", "Unknown"))
+                r_c2.metric(
+                    "Anti-Hallucination Confidence", f"{report.get('confidence_score', 0)}%"
                 )
-                c2.metric(
-                    "Terminated User Sessions",
-                    len(plan["compromised_users"]),
-                    f"{', '.join(plan['compromised_users'])}",
-                )
-                c3.metric(
-                    "Quarantined File Assets",
-                    len(plan["quarantined_files"]),
-                    "Locked in Vault",
+                r_c3.metric(
+                    "Verified Claims Grounded",
+                    f"{report.get('verified_claims_count', 0)} Claims",
                 )
 
-                st.write("")
-                st.markdown("**Linux iptables Egress Drop Rules:**")
-                st.code(plan["iptables_script"], language="bash")
-                st.markdown("**Active Directory Token Invalidation Script:**")
-                st.code(plan["identity_revocation_script"], language="powershell")
+                st.divider()
+                st.markdown(report.get("markdown_body", "No report generated."))
+                st.divider()
+                st.download_button(
+                    label="💾 Download Signed Forensic Report (.md)",
+                    data=report.get("markdown_body", ""),
+                    file_name=f"{state.get('case_id', 'case')}_report.md",
+                    mime="text/markdown",
+                    type="primary",
+                )
 
-        # Agent 1-3: Swarm Execution Ledger
-        elif "Swarm Execution Ledger" in agent_subchoice:
-            st.markdown("#### Swarm Execution Audit Ledger")
-            audit_trail = state.get("audit_trail", [])
-            st.code("\n".join(audit_trail), language="text")
+            # Agent 7: SOAR Remediation
+            elif "SOAR Active Defense" in agent_subchoice:
+                st.markdown("#### Autonomous SOAR Remediation & Active Defense")
+                contain_btn = st.button(
+                    "🚨 Execute Autonomous Zero-Trust Containment",
+                    type="primary",
+                    use_container_width=True,
+                )
+                if contain_btn or st.session_state["containment_executed"]:
+                    st.session_state["containment_executed"] = True
+                    plan = generate_containment_plan(state)
+                    st.success("✅ ZERO-TRUST CONTAINMENT ENFORCED")
+
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric(
+                        "Blacklisted External IPs",
+                        len(plan["blocked_ips"]),
+                        f"{', '.join(plan['blocked_ips'])}",
+                    )
+                    c2.metric(
+                        "Terminated User Sessions",
+                        len(plan["compromised_users"]),
+                        f"{', '.join(plan['compromised_users'])}",
+                    )
+                    c3.metric(
+                        "Quarantined File Assets",
+                        len(plan["quarantined_files"]),
+                        "Locked in Vault",
+                    )
+
+                    st.write("")
+                    st.markdown("**Linux iptables Egress Drop Rules:**")
+                    st.code(plan["iptables_script"], language="bash")
+                    st.markdown("**Active Directory Token Invalidation Script:**")
+                    st.code(plan["identity_revocation_script"], language="powershell")
+
+            # Agent 1-3: Swarm Execution Ledger
+            elif "Swarm Execution Ledger" in agent_subchoice:
+                st.markdown("#### Swarm Execution Audit Ledger")
+                audit_trail = state.get("audit_trail", [])
+                st.code("\n".join(audit_trail), language="text")
 
 # ==============================================================================
 # VIEW 3: AI DETECTIVE COPILOT
