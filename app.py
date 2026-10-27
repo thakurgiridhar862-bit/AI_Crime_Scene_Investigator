@@ -27,7 +27,7 @@ st.set_page_config(
 st.markdown(
     """
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Rajdhani:wght@600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
     
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
@@ -40,27 +40,30 @@ st.markdown(
     
     /* Top Header */
     .app-header {
-        background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
-        border: 1px solid #312E81;
+        background: linear-gradient(135deg, #0F172A 0%, #1A1412 55%, #27140B 100%);
+        border: 1px solid rgba(249, 115, 22, 0.35);
         border-radius: 10px;
         padding: 1.2rem 1.8rem;
         margin-bottom: 1.2rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 15px rgba(249, 115, 22, 0.08);
     }
     .app-title {
-        font-size: 1.8rem;
+        font-family: 'Space Grotesk', 'Rajdhani', sans-serif !important;
+        font-size: 1.85rem;
         font-weight: 800;
-        background: linear-gradient(90deg, #38BDF8, #818CF8, #C084FC);
+        background: linear-gradient(90deg, #FDBA74 0%, #FB923C 30%, #F97316 70%, #EA580C 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        letter-spacing: -0.015em;
         margin-bottom: 0.2rem;
     }
     .app-sub {
-        color: #94A3B8;
-        font-size: 0.9rem;
+        color: #A8A29E;
+        font-size: 0.88rem;
+        letter-spacing: 0.01em;
     }
     
     /* Panel Containers matching user sketch */
