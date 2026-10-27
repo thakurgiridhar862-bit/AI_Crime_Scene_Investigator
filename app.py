@@ -20,10 +20,10 @@ st.set_page_config(
     page_title="AI Digital Crime Scene Investigator",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded"
 )
 
-# Custom Styling (No Sidebar, Ultra-clean, matching user's sketch)
+# Custom Styling (Dark Cyber Forensics Theme)
 st.markdown(
     """
 <style>
@@ -33,9 +33,10 @@ st.markdown(
         font-family: 'Inter', sans-serif;
     }
 
-    /* Completely hide sidebar */
+    /* Custom Left Sidebar styling */
     [data-testid="stSidebar"] {
-        display: none !important;
+        background-color: #0B1120 !important;
+        border-right: 1px solid #1E293B !important;
     }
     
     /* Top Header */
@@ -147,17 +148,60 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Clean Horizontal Navigation (No Sidebar)
-nav_choice = st.radio(
-    "Navigation Menu",
-    [
-        "📥 User Input",
-        "🤖 Report Generation",
-        "💬 AI Detective Copilot",
-    ],
-    horizontal=True,
-    label_visibility="collapsed",
-)
+# Left Sidebar Navigation (Matching user's sketch)
+with st.sidebar:
+    st.markdown(
+        """
+    <div style='padding: 0.2rem 0 1rem 0;'>
+        <div style='font-size: 1.25rem; font-weight: 800; background: linear-gradient(90deg, #38BDF8, #818CF8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>
+            🛡️ AI Crime Scene
+        </div>
+        <div style='font-size: 0.78rem; color: #94A3B8;'>Digital Investigator & SOAR</div>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
+    nav_choice = st.radio(
+        "Navigation",
+        [
+            "📥 User Input",
+            "🤖 Report Generation",
+            "💬 AI Detective Copilot",
+        ],
+        index=0,
+    )
+
+    agent_subchoice = "🕸️ Correlation Graph"
+    if nav_choice == "🤖 Report Generation":
+        st.write("")
+        st.markdown(
+            "<div style='font-size: 0.75rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem;'>Report Modules</div>",
+            unsafe_allow_html=True,
+        )
+        agent_subchoice = st.radio(
+            "Swarm Modules",
+            [
+                "🕸️ Correlation Graph",
+                "⏳ Chrono-Timeline",
+                "📝 Incident Report",
+                "🛡️ SOAR Active Defense",
+                "⚙️ Swarm Execution Ledger",
+            ],
+            index=0,
+            label_visibility="collapsed",
+        )
+
+    st.write("")
+    st.markdown(
+        """
+    <div style='background: rgba(16,185,129,0.1); border: 1px solid #10B981; border-radius: 6px; padding: 0.6rem 0.8rem; margin-top: 1.2rem;'>
+        <div style='color: #10B981; font-weight: 700; font-size: 0.75rem; font-family: monospace;'>● SWARM ACTIVE (7 AGENTS)</div>
+        <div style='color: #94A3B8; font-size: 0.72rem; margin-top: 2px;'>NIST SP 800-86 Compliant</div>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
 
 st.write("")
 
@@ -451,38 +495,9 @@ elif "Report Generation" in nav_choice:
         )
 
         st.write("")
-        st.markdown(
-            """
-            <div style='background: #0F172A; border: 1px solid #1E293B; border-radius: 8px; padding: 0.8rem 1.2rem; margin-bottom: 1.2rem;'>
-                <div style='font-size: 0.82rem; font-weight: 700; color: #38BDF8; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.4rem;'>
-                    🔍 AGENT WORKSTREAM INSPECTOR (SELECT WORKSTREAM)
-                </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        col_menu1, col_menu2 = st.columns([1.6, 1])
-        with col_menu1:
-            agent_view = st.selectbox(
-                "Select Agent Deliverable to Inspect:",
-                options=[
-                    "🕸️ Agent 4: Entity Resolution & Correlation Graph",
-                    "⏳ Agent 5: Chronological Forensic Timeline",
-                    "📝 Agent 6: Critic-Verified Incident Report",
-                    "🛡️ Agent 7: SOAR Autonomous Zero-Trust Containment",
-                    "⚙️ Agents 1-3: Swarm Execution Audit Ledger",
-                ],
-                label_visibility="collapsed",
-            )
-        with col_menu2:
-            st.markdown(
-                "<div style='color: #94A3B8; font-size: 0.85rem; padding-top: 0.4rem;'>⚡ Select from dropdown to switch workstream immediately</div>",
-                unsafe_allow_html=True,
-            )
-        st.markdown("</div>", unsafe_allow_html=True)
 
         # Agent 4: PyVis Interactive Correlation Graph
-        if "Agent 4:" in agent_view:
+        if "Correlation Graph" in agent_subchoice:
             st.markdown("#### Entity Resolution & Kill-Chain Network Graph")
             st.caption(
                 "Visualizing connected entities: Attacker IP ➔ Compromised User ➔ Staged File ➔ Exfiltration Destination."
@@ -617,7 +632,7 @@ elif "Report Generation" in nav_choice:
                 st.warning(f"Interactive PyVis graph rendering fallback: {str(e)}")
 
         # Agent 5: Chrono-Timeline
-        elif "Agent 5:" in agent_view:
+        elif "Chrono-Timeline" in agent_subchoice:
             st.markdown("#### Interleaved Chronological Incident Sequence")
             timeline = state.get("timeline", [])
 
@@ -662,7 +677,7 @@ elif "Report Generation" in nav_choice:
             )
 
         # Agent 6: Report Agent
-        elif "Agent 6:" in agent_view:
+        elif "Incident Report" in agent_subchoice:
             st.markdown("#### Verified Incident Response Report")
             report = state.get("report", {})
             r_c1, r_c2, r_c3 = st.columns(3)
@@ -687,7 +702,7 @@ elif "Report Generation" in nav_choice:
             )
 
         # Agent 7: SOAR Remediation
-        elif "Agent 7:" in agent_view:
+        elif "SOAR Active Defense" in agent_subchoice:
             st.markdown("#### Autonomous SOAR Remediation & Active Defense")
             contain_btn = st.button(
                 "🚨 Execute Autonomous Zero-Trust Containment",
@@ -723,7 +738,7 @@ elif "Report Generation" in nav_choice:
                 st.code(plan["identity_revocation_script"], language="powershell")
 
         # Agent 1-3: Swarm Execution Ledger
-        elif "Agents 1-3:" in agent_view:
+        elif "Swarm Execution Ledger" in agent_subchoice:
             st.markdown("#### Swarm Execution Audit Ledger")
             audit_trail = state.get("audit_trail", [])
             st.code("\n".join(audit_trail), language="text")
